@@ -1,0 +1,162 @@
+[
+ {
+   "name": "zero",
+   "number": 0,
+   "use": "constant 0"
+ },
+ {
+   "name": "at",
+   "number": 1,
+   "use": "assembler temporary"
+ },
+ {
+   "name": "v0",
+   "number": 2,
+   "use": "values for function returns and expression evaluation"
+ },
+ {
+   "name": "v1",
+   "number": 3,
+   "use": "values for function returns and expression evaluation"
+ },
+ {
+   "name": "a0",
+   "number": 4,
+   "use": "function arguments"
+ },
+ {
+   "name": "a1",
+   "number": 5,
+   "use": "function arguments"
+ },
+ {
+   "name": "a2",
+   "number": 6,
+   "use": "function arguments"
+ },
+ {
+   "name": "a3",
+   "number": 7,
+   "use": "function arguments"
+ },
+ {
+   "name": "t0",
+   "number": 8,
+   "use": "temporaries"
+ },
+ {
+   "name": "t1",
+   "number": 9,
+   "use": "temporaries"
+ },
+ {
+   "name": "t2",
+   "number": 10,
+   "use": "temporaries"
+ },
+ {
+   "name": "t3",
+   "number": 11,
+   "use": "temporaries"
+ },
+ {
+   "name": "t4",
+   "number": 12,
+   "use": "temporaries"
+ },
+ {
+   "name": "t5",
+   "number": 13,
+   "use": "temporaries"
+ },
+ {
+   "name": "t6",
+   "number": 14,
+   "use": "temporaries"
+ },
+ {
+   "name": "t7",
+   "number": 15,
+   "use": "temporaries"
+ },
+ {
+   "name": "s0",
+   "number": 16,
+   "use": "saved temporaries"
+ },
+ {
+   "name": "s1",
+   "number": 17,
+   "use": "saved temporaries"
+ },
+ {
+   "name": "s2",
+   "number": 18,
+   "use": "saved temporaries"
+ },
+ {
+   "name": "s3",
+   "number": 19,
+   "use": "saved temporaries"
+ },
+ {
+   "name": "s4",
+   "number": 20,
+   "use": "saved temporaries"
+ },
+ {
+   "name": "s5",
+   "number": 21,
+   "use": "saved temporaries"
+ },
+ {
+   "name": "s6",
+   "number": 22,
+   "use": "saved temporaries"
+ },
+ {
+   "name": "s7",
+   "number": 23,
+   "use": "saved temporaries"
+ },
+ {
+   "name": "t8",
+   "number": 24,
+   "use": "temporaries"
+ },
+ {
+   "name": "t9",
+   "number": 25,
+   "use": "temporaries"
+ },
+ {
+   "name": "k0",
+   "number": 26,
+   "use": "reserved for OS kernel"
+ },
+ {
+   "name": "k1",
+   "number": 27,
+   "use": "reserved for OS kernel"
+ },
+ {
+   "name": "gp",
+   "number": 28,
+   "use": "global pointer"
+ },
+ {
+   "name": "sp",
+   "number": 29,
+   "use": "stack pointer"
+ },
+ {
+   "name": "fp",
+   "number": 30,
+   "use": "frame pointer"
+ },
+ {
+   "name": "ra",
+   "number": 31,
+   "use": "return address"
+ }
+]
