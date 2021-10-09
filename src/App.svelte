@@ -1,354 +1,127 @@
 <script lang="ts">
-	import instructions from './instructions.json';
-	import registers from './registers.json';
+	import { parseInstruction } from './instructions';
+	import { binToHex, getZeroPadding, hexToBin } from './utils';
 
-	type Instruction = typeof instructions[number];
-
-	export let name: string;
 	let hexInput: string;
 	let binInput: string;
 	let isInputHex = true;
 	let showRegisterName = true;
-	type InstructionType = 'R' | 'J' | 'I';
-	
-	type JFieldName = 'jaddr';
-	type IFieldName = 'immed';
-	type RFieldName = 'rs' | 'rt' | 'rd' | 'shamt' | 'fcode';
-	type FieldName = 'unknown' | 'opcode' | RFieldName | IFieldName | JFieldName;
-	type Field = {
-		name: FieldName,
-		value: string,
-		binary: string,
-		length: number,
-	};
-
-	const rInstructions = instructions.filter(i => i.functionCode !== 'NA');
-
-	function hexToBin(hex: string) {
-		if (!hex) return '';
-		const newLength = hex.length * 4;
-		return parseInt(hex, 16).toString(2).padStart(newLength, '0');
-	}
-
-	function binToHex(bin: string) {
-		if (!bin) return '';
-		const newLength = Math.ceil(bin.length / 4) * 4;
-		const paddedBin = bin.padEnd(newLength, '0');
-		return paddedBin.match(/.{1,4}/g)!.map(bits => parseInt(bits, 2).toString(16)).join('');
-	}
-
-	function getPadding(binary: string) {
-		return '0'.repeat(Math.max(0, 32 - binary.length));
-	}
-
-	function getType(binary: string): InstructionType {
-		if (binary.length < 6) {
-			return null;
-		}
-		const opcode = parseInt(binary.substring(0, 6), 2);
-		if (opcode === 0) {
-			// R-type instruction
-			return 'R';
-		} else {
-			const instruction = instructions.find(i => i.opcode === opcode);
-			return instruction?.type as InstructionType;
-		}
-	}
-
-	function getOpcode(opcodeString: string) {
-		const opcode = parseInt(opcodeString, 2);
-		if (opcode === 0) {
-			// R-type instruction
-			return 'R';
-		} else {
-			const instruction = instructions.find(i => i.opcode === opcode);
-			return instruction?.mnemonic;
-		}
-	}
-
-	function getRegisterNumber(binary: string): string {
-		const registerNumber = parseInt(binary, 2);
-		return `\$${registerNumber}`;
-	}
-	
-	function getRegisterName(binary: string) {
-		const registerNumber = parseInt(binary, 2);
-		const registerName = registers.find(r => r.number === registerNumber).name;
-		return `\$${registerName}`;
-	}
-
-	function getAddressHex(address: string) {
-		return '0x' + (parseInt(address, 2) * 4).toString(16);
-	}
-
-	function getShiftAmount(shiftAmount: string) {
-		return parseInt(shiftAmount, 2).toString(10);
-	}
-
-	function getFunctionCode(functionCode: string) {
-		return rInstructions.find(i => parseInt(i.functionCode, 16) === parseInt(functionCode, 2)).mnemonic;
-	}
-
-	function getImmediate(immediate: string) {
-		return parseInt(immediate, 2).toString(10);
-	}
-
-	function getUsedFields(type: InstructionType, rTypeInstruction: Instruction): FieldName[] {
-		// all
-		// rs (jr)
-		// shift (rd, rt, shamt) (sll, srl, sra)
-		// rs and rt (div/ divu mult multu)
-		// rd only (mfhi, mflo)
-		// rd and rs (mfc0)
-		switch (type) {
-			case 'R': {
-				switch (rTypeInstruction.mnemonic) {
-					case 'jr':
-						return ['rs', 'fcode'];
-					case 'sll':
-					case 'srl':
-					case 'sra':
-						return ['rd', 'rt', 'shamt', 'fcode'];
-					case 'div':
-					case 'divu':
-					case 'mult':
-					case 'multu':
-						return ['rs', 'rt', 'fcode'];
-					case 'mfhi':
-					case 'mflo':
-						return ['rd', 'fcode'];
-					// case 'mfc0':
-						// The opcode is 10 in hex
-						// return ['rd', 'rs', 'fcode'];
-					default:
-						return ['rd', 'rs', 'rt', 'fcode'];
-				}
-			}
-			case 'I': {
-				return ['rs', 'rt', 'immed'];
-			}
-		}
-	}
- 
-	
-	function parseInstructionFields(binary: string, showRegisterName: boolean): Field[] {
-		const fields: Field[] = [];
-
-		// Get opcode
-
-		let rest: string = binary;
-		
-		function extractField(name: FieldName, length: number, getValue: (binary: string) => string) {
-			let fieldValue = 'unknown';
-			// if (rest.length < length)
-			// 	rest = '';
-			 {
-				try {
-					fieldValue = getValue(rest.substring(0, length).padEnd(length, '0'));
-				} catch (e) {
-					fieldValue = 'error';
-				}
-			}
-			fields.push({
-				name: name,
-				value: fieldValue,
-				binary: rest.substring(0, length),
-				length: length,
-			})
-			rest = rest.substring(length);
-		}
-
-		function getUnknownField(binary: string) {
-			return 'unknown';
-		}
-
-		extractField('opcode', 6, getOpcode);
-			
-		const type = getType(binary);
-		if (!type) {
-			extractField('unknown', 26, getUnknownField);
-		}
-
-		const getRegisterValue = showRegisterName ? getRegisterName : getRegisterNumber;
-
-		switch(type) {
-			case 'R':
-				extractField('rs', 5, getRegisterValue);
-				extractField('rt', 5, getRegisterValue);
-				extractField('rd', 5, getRegisterValue);
-				extractField('shamt', 5, getShiftAmount);
-				extractField('fcode', 6, getFunctionCode);
-
-				break;
-			case 'I':
-				extractField('rs', 5, getRegisterValue);
-				extractField('rt', 5, getRegisterValue);
-				extractField('immed', 16, getImmediate);
-				break;
-			case 'J':
-				extractField('jaddr', 26, getAddressHex);
-				break;
-		}
-		return fields;
-	}
-
-	function formatBinary(binary: string) {
-		return binary.match(/.{1,4}/g)?.join(' ') ?? '';
-	}
-
-	function formatBinaryEnd(binary: string) {
-		const chunkCount = Math.floor(binary.length / 4);
-		const partialChunkSize = binary.length % 4;
-		const partialChunk = '0'.repeat(partialChunkSize);
-		return partialChunk + ' 0000'.repeat(chunkCount)
-	}
-
-	function formatIInstruction(instruction: Instruction, fields: Field[]) {
-		// Fields = [rs, rt, immed]
-		const fieldValues = fields.map(f => f.value);
-		switch(instruction.mnemonic) {
-			case 'addi':
-			case 'addiu':
-			case 'andi':
-			case 'ori':
-			case 'slti':
-			case 'sltiu':
-				// format: addi r1, r2, immed
-				return `${fieldValues[1]}, ${fieldValues[0]}, ${fieldValues[2]}`;
-			case 'beq':
-			case 'bne':
-				return `${fieldValues[1]}, ${fieldValues[0]}, PC+4 + ${fieldValues[2]}`;
-			case 'lbu':
-			case 'lhu':
-			case 'll':
-			case 'lui':
-			case 'lw':
-			case 'lb':
-			case 'sb':
-			case 'sc':
-			case 'sh':
-			case 'sw':
-				return `${fieldValues[1]}, ${fieldValues[2]}(${fieldValues[0]})`;
-		}
-	}
-
-	function getMipsInstruction(type: InstructionType, fields: Field[]): string {
-		switch (type) {
-			case 'R': {
-				const functionCodeField = fields.find(f => f.name === 'fcode');
-				if (!functionCodeField) return;
-				const instruction = rInstructions.find(i => parseInt(i.functionCode) === parseInt(functionCodeField.binary, 2));
-				
-				if (!instruction) return;
-				const usedFieldNames = getUsedFields('R', instruction);
-
-				const fieldsInInstruction: FieldName[] = ['rd', 'rs', 'rt', 'shamt'];
-				
-				const commaDelimitedRegisters = fields
-						.filter(f => fieldsInInstruction.includes(f.name) && usedFieldNames.includes(f.name))
-						.sort((f1, f2) => fieldsInInstruction.indexOf(f1.name) - fieldsInInstruction.indexOf(f2.name))
-						.map(f => f.value).join(', ');
-				
-				const mipsInstruction = instruction!.mnemonic + ' ' + commaDelimitedRegisters;
-				return mipsInstruction;
-			}
-			case 'I': {
-				const opcodeField = fields.find(f => f.name === 'opcode');
-				const instruction = instructions.find(i => i.opcode === parseInt(opcodeField.binary, 2));
-				
-				const usedFieldNames = getUsedFields('I', instruction);
-
-				const fieldsInInstruction: FieldName[] = ['rs', 'rt', 'immed'];
-				
-				const filteredFields = fields
-						.filter(f => fieldsInInstruction.includes(f.name) && usedFieldNames.includes(f.name))
-						.sort((f1, f2) => fieldsInInstruction.indexOf(f1.name) - fieldsInInstruction.indexOf(f2.name));
-				
-						
-				const formatString = formatIInstruction(instruction, filteredFields);
-
-				const mipsInstruction = instruction!.mnemonic + ' ' + formatString;
-				return mipsInstruction;
-			}
-			case 'J': {
-				const jumpAddr = fields.find(f => f.name === 'jaddr');
-				const opcodeField = fields.find(f => f.name === 'opcode');
-				// const instruction = instructions.find(i => i.opcode === parseInt(opcodeField.binary, 2));
-				
-				const mipsInstruction = opcodeField.value + ' ' + jumpAddr.value;
-				return mipsInstruction;
-			}
-		}
-	}
-
-	// [opcode][rs][rt][rd][sa][function code]
-	// [opcode][rs][rt][instruction]
-	// [opcode][address]
 
 	function toggleInput() {
 		isInputHex = !isInputHex;
 	}
 
-
-	let binary;
-	let isInputValid;
+	let binary: string;
+	let isInputValid: boolean;
 
 	$: if (isInputHex) {
 		const matches = (hexInput ?? '').match(/^(?:0x)?([0-9a-fA-F]{0,8})/);
 		const extractedHex = matches ? matches[1] : '';
 		binary = hexToBin(extractedHex);
 		binInput = binary;
-		isInputValid = matches;
+		isInputValid = matches !== null;
 	} else {
 		const matches = (binInput ?? '').match(/^(?:0x)?([0-1]{0,32})/);
 		const extractedBin = matches ? matches[1] : '';
 		binary = extractedBin;
 		hexInput = binToHex(binary);
-		isInputValid = matches;
+		isInputValid = matches !== null;
 	}
 
-	$: padding = getPadding(binary);
+	$: fullBinary = binary.padEnd(32, '0');
+	$: fullHexadecimal = parseInt(fullBinary, 2).toString(16).padStart(8, '0');
+
+	$: padding = getZeroPadding(binary);
 	$: inputType = isInputHex ? 'hexadecimal' : 'binary';
 
 
-	$: opcode = getOpcode(binary.substring(0, 6));
-	$: fields = parseInstructionFields(binary, showRegisterName);
-	$: mipsInstruction = getMipsInstruction(getType(binary), fields);
+	// $: opcode = getOpcode(binary.substring(0, 6));
+	// $: fields = parseInstructionFields(binary, showRegisterName);
+
+	$: instruction = parseInstruction(binary, showRegisterName);
+	$: fields = instruction?.fields ?? [];
+
+	$: mipsInstruction = instruction.toMips();
+
+	$: hexDisplay = binToHex(binary);
+	$: binDisplay = binary.padEnd(32, '0');
 </script>
 
 <main>
 	<h1>mips converter</h1>
-	<h4>Input {inputType}</h4>
-	<button on:click={toggleInput}>Toggle input</button>
-
-	<div>
-		<span>Show register name</span>
-		<input bind:checked={showRegisterName} type="checkbox"/>
-	</div>
-	{#if !isInputValid}
-		<p>Error in input</p>
-	{/if}
-	{#if isInputHex}
-		<input bind:value={hexInput} placeholder="0x12345678"/>
-	{/if}
-	{#if !isInputHex}
-		<input bind:value={binInput} placeholder="0..."/>
-	{/if}
-
 	<section>
-		<h4>Instruction binary</h4>
-		<p class="code">0x{binToHex(binary) || '0'}</p>
-		<p class="code">
-			<span>{formatBinary(binary)}</span><!--
-			--><span class="gray">{formatBinaryEnd(padding)}</span>
-		</p>
+		<h2>Input</h2>
+		{#if !isInputValid}
+			<p>Error in input</p>
+		{/if}
+		
+		<button id="change-input-button" class="icon-button" on:click={toggleInput}>
+			<label for="change-input-button">as {isInputHex ? 'hexadecimal' : 'binary'}</label>
+			<span class="material-icons">
+				sync
+			</span>
+		</button>
+		{#if isInputHex}
+			<div class="input full-width">
+				<input id="hexInput" class="code" bind:value={hexInput} placeholder="0x12345678"/>
+			</div>
+		{/if}
+		{#if !isInputHex}
+			<div class="input full-width">
+				<input id="binInput" class="code bin-input" bind:value={binInput} placeholder="0..."/>
+			</div>
+		{/if}
 	</section>
-	<h4>Decoded instruction</h4>
-	<h3 class="code">
-		{mipsInstruction}
-	</h3>
-	<section style="position: relative">
-		<table class="fields code">
+	<section>
+		<h2>Bit information</h2>
+		<table class="fields code-table raw-table transparent">
+			<tr>
+				<!-- <th class="vertical-th"></th> -->
+				
+				{#each ['', 32, 28, 24, 16, 12 ,8 ,4, 0] as index}
+					<td style="text-align: right">{index}</td>
+				{/each}
+			</tr>
+		</table>
+		<table class="fields code-table raw-table">
+			<tr>
+				<th class="vertical-th">Binary</th>
+				{#each (binDisplay.match(/.{1,4}/g) ?? []) as chunk, i}
+					<td>
+						{#if i * 4 >= binary.length}
+							<span class="gray">{chunk}</span>
+						{/if}
+						{#if i * 4 + 4 <= binary.length}
+							<span>{chunk}</span>
+						{/if}
+						{#if i * 4 < binary.length && i * 4 + 4 > binary.length}
+							<span>{chunk.substring(0, binary.length - i * 4)}</span><!--
+							--><span class="gray">{'0'.repeat(4 - (binary.length - i * 4))}</span>
+						{/if}
+					</td>
+				{/each}
+			</tr>
+			<tr>
+				<th class="vertical-th">Hex</th>
+				{#each hexDisplay.padEnd(8, '0').split('') as chunk, i}
+					<td class={i >= hexDisplay.length ? 'gray' : ''}>{chunk}</td>
+				{/each}
+			</tr>
+		</table>
+	</section>
+	<section id="decoded-instruction-section" class="bg-primary panel" style="position: relative">
+		<h2 style="margin-block-start: 0;">Decoded instruction</h2>
+		<p id="mips-instruction" class="code">
+			{mipsInstruction ?? 'unknown'}
+		</p>
+		<h3>Info</h3>
+		<p class='instruction-encoding'>
+			Hex: 0x{fullHexadecimal}
+		</p>
+		<p class='instruction-encoding'>
+			Binary: 0b{fullBinary}
+		</p>
+		<table class="fields code-table">
 			<tr>
 				{#each fields as field}
 					<th>{field.name}</th>
@@ -372,25 +145,127 @@
 </main>
 
 <style>
+/* :root {
+	--clr-primary-200: #E93835;
+	--clr-primary-400: #EF6F6C;
+	--clr-background: #2E394D;
+
+	--clr-on-primary: #FFFFFF;
+} */
 	main {
-		text-align: center;
+		text-align: left;
 		padding: 1em;
-		max-width: 500px;
+		max-width: 50rem;
 		margin: 0 auto;
 	}
 
 	.code {
-		font-family: 'Courier New', Courier, monospace;
+		font-family: 'Inconsolata', monospace;
+		font-weight: bold;
 	}
 
 	.gray {
 		opacity: 50%;
 	}
 
+	.panel {
+		margin-inline: -1rem;
+		padding-inline: 1rem;
+		padding-block: 1rem;
+		border-radius: 0.5rem;
+	}
+
+	table.transparent,
+	table.transparent td {
+		border-color: transparent;
+	}
+
+	.bg-primary {
+		background-color: var(--clr-primary-400);
+		color: var(--clr-on-primary);
+		--clr-on: var(--clr-on-primary);
+	}
+
+	.raw-table {
+		table-layout: fixed;
+	}
+
 	table.fields,
 	table.fields th, td {
-		border: 1px solid #333333;
+		border: 2px solid var(--clr-on);
 		border-collapse: collapse;
+	}
+
+	table { 
+		width: 100%;
+		text-align: center;
+	}
+
+	.code-table td {
+		font-family: 'Inconsolata', monospace;
+		font-weight: bold;
+	}
+
+	table.fields .vertical-th {
+		text-align: end;
+		margin-right: 2rem;
+		border-inline-start-color: transparent;
+		border-block-color: transparent;
+	}
+
+	table .vertical-th:after {
+		content: '   ';
+		white-space: pre;
+	}
+
+	.icon-button {
+		display: flex;
+		align-items: center;
+		border: none;
+		background-color: transparent;
+		color: var(--clr-on);
+		border-radius: 0.5rem;
+		/* margin: auto; */
+		padding-inline: 0.5rem;
+		padding-block: 0.5rem;
+		/* width: 48px; */
+		/* height: 48px; */
+		vertical-align: middle;
+		transition: background 0.2s;
+		text-align: center;
+	}
+
+	.icon-button label {
+		margin-inline: 0.3rem;
+	}
+
+	.icon-button:hover,
+	.icon-button:active {
+		background-color: var(--clr-background-dark);
+	}
+
+	.input.full-width input {
+		width: 100%;
+	}
+
+	.input label {
+		margin-block-end: 0.2em;
+	}
+
+	.instruction-encoding {
+		margin-block: 0.5rem;
+	}
+
+	#decoded-instruction-section {
+		margin-block-start: 5rem;
+	}
+
+	#change-input-button {
+		margin: 0;
+	}
+
+	#mips-instruction {
+		font-size: 1.5rem;
 	}
 
 	@media (max-width: 640px) {

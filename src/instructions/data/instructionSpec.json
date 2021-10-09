@@ -1,0 +1,317 @@
+[
+    {
+      "fullName": "Add",
+      "functionCode": 32,
+      "mnemonic": "add",
+      "opcode": 0,
+      "type": "R"
+    },
+    {
+      "fullName": "Add Immediate",
+      "functionCode": null,
+      "mnemonic": "addi",
+      "opcode": 8,
+      "type": "I"
+    },
+    {
+      "fullName": "Add Unsigned",
+      "functionCode": 33,
+      "mnemonic": "addu",
+      "opcode": 0,
+      "type": "R"
+    },
+    {
+      "fullName": "Add Unsigned Immediate",
+      "functionCode": null,
+      "mnemonic": "addiu",
+      "opcode": 9,
+      "type": "I"
+    },
+    {
+      "fullName": "Arithmetic Shift Right (sign-extended)",
+      "functionCode": 3,
+      "mnemonic": "sra",
+      "opcode": 0,
+      "type": "R"
+    },
+    {
+      "fullName": "Bitwise AND",
+      "functionCode": 36,
+      "mnemonic": "and",
+      "opcode": 0,
+      "type": "R"
+    },
+    {
+      "fullName": "Bitwise AND Immediate",
+      "functionCode": null,
+      "mnemonic": "andi",
+      "opcode": 12,
+      "type": "I"
+    },
+    {
+      "fullName": "Bitwise NOR (NOT-OR)",
+      "functionCode": 39,
+      "mnemonic": "nor",
+      "opcode": 0,
+      "type": "R"
+    },
+    {
+      "fullName": "Bitwise OR",
+      "functionCode": 37,
+      "mnemonic": "or",
+      "opcode": 0,
+      "type": "R"
+    },
+    {
+      "fullName": "Bitwise OR Immediate",
+      "functionCode": null,
+      "mnemonic": "ori",
+      "opcode": 13,
+      "type": "I"
+    },
+    {
+      "fullName": "Bitwise XOR (Exclusive-OR)",
+      "functionCode": 38,
+      "mnemonic": "xor",
+      "opcode": 0,
+      "type": "R"
+    },
+    {
+      "fullName": "Branch if Equal",
+      "functionCode": null,
+      "mnemonic": "beq",
+      "opcode": 4,
+      "type": "I"
+    },
+    {
+      "fullName": "Branch if Less Than or Equal to Zero",
+      "functionCode": null,
+      "mnemonic": "blez",
+      "opcode": 6,
+      "type": "I"
+    },
+    {
+      "fullName": "Branch if Not Equal",
+      "functionCode": null,
+      "mnemonic": "bne",
+      "opcode": 5,
+      "type": "I"
+    },
+    {
+      "fullName": "Branch on Greater Than Zero",
+      "functionCode": null,
+      "mnemonic": "bgtz",
+      "opcode": 7,
+      "type": "I"
+    },
+    {
+      "fullName": "Divide",
+      "functionCode": 26,
+      "mnemonic": "div",
+      "opcode": 0,
+      "type": "R"
+    },
+    {
+      "fullName": "Jump and Link",
+      "functionCode": null,
+      "mnemonic": "jal",
+      "opcode": 3,
+      "type": "J"
+    },
+    {
+      "fullName": "Jump and Link Register",
+      "functionCode": 9,
+      "mnemonic": "jalr",
+      "opcode": 0,
+      "type": "J"
+    },
+    {
+      "fullName": "Jump to Address",
+      "functionCode": null,
+      "mnemonic": "j",
+      "opcode": 2,
+      "type": "J"
+    },
+    {
+      "fullName": "Jump to Address in Register",
+      "functionCode": 8,
+      "mnemonic": "jr",
+      "opcode": 0,
+      "type": "R"
+    },
+    {
+      "fullName": "Load Byte",
+      "functionCode": null,
+      "mnemonic": "lb",
+      "opcode": 32,
+      "type": "I"
+    },
+    {
+      "fullName": "Load Byte Unsigned",
+      "functionCode": null,
+      "mnemonic": "lbu",
+      "opcode": 36,
+      "type": "I"
+    },
+    {
+      "fullName": "Load Halfword Unsigned",
+      "functionCode": null,
+      "mnemonic": "lhu",
+      "opcode": 37,
+      "type": "I"
+    },
+    {
+      "fullName": "Load Upper Immediate",
+      "functionCode": null,
+      "mnemonic": "lui",
+      "opcode": 15,
+      "type": "I"
+    },
+    {
+      "fullName": "Load Word",
+      "functionCode": null,
+      "mnemonic": "lw",
+      "opcode": 35,
+      "type": "I"
+    },
+    {
+      "fullName": "Logical Shift Left",
+      "functionCode": 0,
+      "mnemonic": "sll",
+      "opcode": 0,
+      "type": "R"
+    },
+    {
+      "fullName": "Logical Shift Right (0-extended)",
+      "functionCode": 2,
+      "mnemonic": "srl",
+      "opcode": 0,
+      "type": "R"
+    },
+    {
+      "fullName": "Move from Coprocessor 0",
+      "functionCode": null,
+      "mnemonic": "mfc0",
+      "opcode": 16,
+      "type": "R"
+    },
+    {
+      "fullName": "Move from HI Register",
+      "functionCode": 16,
+      "mnemonic": "mfhi",
+      "opcode": 0,
+      "type": "R"
+    },
+    {
+      "fullName": "Move from LO Register",
+      "functionCode": 18,
+      "mnemonic": "mflo",
+      "opcode": 0,
+      "type": "R"
+    },
+    {
+      "fullName": "Move to HI Register",
+      "functionCode": 17,
+      "mnemonic": "mthi",
+      "opcode": 0,
+      "type": "R"
+    },
+    {
+      "fullName": "Move to LO Register",
+      "functionCode": 19,
+      "mnemonic": "mtlo",
+      "opcode": 0,
+      "type": "R"
+    },
+    {
+      "fullName": "Multiply",
+      "functionCode": 24,
+      "mnemonic": "mult",
+      "opcode": 0,
+      "type": "R"
+    },
+    {
+      "fullName": "Set to 1 if Less Than",
+      "functionCode": 42,
+      "mnemonic": "slt",
+      "opcode": 0,
+      "type": "R"
+    },
+    {
+      "fullName": "Set to 1 if Less Than Immediate",
+      "functionCode": null,
+      "mnemonic": "slti",
+      "opcode": 10,
+      "type": "I"
+    },
+    {
+      "fullName": "Set to 1 if Less Than Unsigned",
+      "functionCode": 43,
+      "mnemonic": "sltu",
+      "opcode": 0,
+      "type": "R"
+    },
+    {
+      "fullName": "Set to 1 if Less Than Unsigned Immediate",
+      "functionCode": null,
+      "mnemonic": "sltiu",
+      "opcode": 11,
+      "type": "I"
+    },
+    {
+      "fullName": "Store Byte",
+      "functionCode": null,
+      "mnemonic": "sb",
+      "opcode": 40,
+      "type": "I"
+    },
+    {
+      "fullName": "Store Halfword",
+      "functionCode": null,
+      "mnemonic": "sh",
+      "opcode": 41,
+      "type": "I"
+    },
+    {
+      "fullName": "Store Word",
+      "functionCode": null,
+      "mnemonic": "sw",
+      "opcode": 43,
+      "type": "I"
+    },
+    {
+      "fullName": "Store Conditional",
+      "functionCode": null,
+      "mnemonic": "sc",
+      "opcode": 56,
+      "type": "I"
+    },
+    {
+      "fullName": "Subtract",
+      "functionCode": 34,
+      "mnemonic": "sub",
+      "opcode": 0,
+      "type": "R"
+    },
+    {
+      "fullName": "Unsigned Divide",
+      "functionCode": 27,
+      "mnemonic": "divu",
+      "opcode": 0,
+      "type": "R"
+    },
+    {
+      "fullName": "Unsigned Multiply",
+      "functionCode": 25,
+      "mnemonic": "multu",
+      "opcode": 0,
+      "type": "R"
+    },
+    {
+      "fullName": "Unsigned Subtract",
+      "functionCode": 35,
+      "mnemonic": "subu",
+      "opcode": 0,
+      "type": "R"
+    }
+  ]
