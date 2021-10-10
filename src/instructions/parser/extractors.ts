@@ -1,8 +1,8 @@
 import instructions from '../data/instructionSpec.json';
 import registers from '../data/registers.json';
+import type { ImmediateFormat } from '../format/format';
 
 const rInstructions = instructions.filter(i => i.functionCode !== null);
-
 
 export function getOpcodeValue(bits: string): string {
   const opcode = parseInt(bits, 2);
@@ -25,8 +25,8 @@ export function getFunctionCode(functionCode: string): string {
   )!.mnemonic;
 }
 
-export function getImmediate(immediate: string) {
-  return parseInt(immediate, 2).toString(10);
+export function getImmediate(immediateFormat: ImmediateFormat) {
+  return (immediate: string) => immediateFormat.format(immediate);
 }
 
 export function getJumpAddress(address: string) {

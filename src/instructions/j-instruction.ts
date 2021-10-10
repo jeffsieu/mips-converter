@@ -1,4 +1,5 @@
 import instructionSpecs from './data/instructionSpec.json';
+import type { ImmediateFormat } from './format/format';
 
 import Instruction from "./instruction";
 import type InstructionField from './instruction-field';
@@ -12,7 +13,7 @@ export default class JInstruction extends Instruction {
     this.spec = instructionSpecs.find(spec => spec.opcode === this.opcode.interpolatedValue) ?? null;
   }
 
-  toMips(): string {
+  override toMips(): string {
     const mipsInstruction = this.opcode.value + ' ' + this.jumpAddress.value;
     return mipsInstruction;
   }

@@ -8,6 +8,7 @@ import FieldExtractor from './field-extractor';
 import type { InstructionType } from "./types";
 import UnknownInstruction from './unknown-instruction';
 import InstructionField from "./instruction-field";
+import type { ImmediateFormat } from "./format/format";
 
 const shiftMnemonics = ['sll', 'srl', 'sra'];
 
@@ -25,7 +26,7 @@ function getType(binary: string): InstructionType | 'U' {
   }
 }
 
-export function parseInstruction(binary: string, showRegisterName: boolean): Instruction {
+export function parseInstruction(binary: string, showRegisterName: boolean, immediateFormat: ImmediateFormat): Instruction {
   const extractor = new FieldExtractor(binary);
   const type = getType(binary);
   const opcode = extractor.extractField('opcode', 6, getOpcodeValue);
@@ -45,7 +46,7 @@ export function parseInstruction(binary: string, showRegisterName: boolean): Ins
     case 'I': {
       const rs = extractor.extractField('rs', 5, getRegister);
       const rt = extractor.extractField('rt', 5, getRegister);
-      const immediate = extractor.extractField('immed', 16, getImmediate);
+      const immediate = extractor.extractField('immed', 16, getImmediate(immediateFormat));
 
       return new IInstruction(opcode, rs, rt, immediate);
     }

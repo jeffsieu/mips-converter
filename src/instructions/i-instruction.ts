@@ -1,24 +1,17 @@
 import instructionSpecs from './data/instructionSpec.json';
+import type { ImmediateFormat } from './format/format';
 
 import Instruction from "./instruction";
 import type InstructionField from './instruction-field';
 import type { RegisterField, FieldName } from "./types";
 
-function formatIInstruction(mnemonic: string, fields: InstructionField<number>[]) {
+function formatIInstruction(mnemonic: string, fields: InstructionField<number>[]): string {
   // Fields = [rs, rt, immed]
   const fieldValues = fields.map(f => f.value);
-  switch(mnemonic) {
-    case 'addi':
-    case 'addiu':
-    case 'andi':
-    case 'ori':
-    case 'slti':
-    case 'sltiu':
-      // format: addi r1, r2, immed
-      return `${fieldValues[1]}, ${fieldValues[0]}, ${fieldValues[2]}`;
+  switch (mnemonic) {
     case 'beq':
     case 'bne':
-      return `${fieldValues[1]}, ${fieldValues[0]}, PC+4 + ${fieldValues[2]}`;
+      return `${fieldValues[1]}, ${fieldValues[0]}, PC + 4 + ${fieldValues[2]}`;
     case 'lbu':
     case 'lhu':
     case 'll':
@@ -30,6 +23,9 @@ function formatIInstruction(mnemonic: string, fields: InstructionField<number>[]
     case 'sh':
     case 'sw':
       return `${fieldValues[1]}, ${fieldValues[2]}(${fieldValues[0]})`;
+    default:
+      // format: addi r1, r2, immed
+      return `${fieldValues[1]}, ${fieldValues[0]}, ${fieldValues[2]}`;
   }
 }
 
@@ -52,7 +48,7 @@ export default class IInstruction extends Instruction {
     this.spec = instructionSpecs.find(spec => spec.opcode === this.opcode.interpolatedValue) ?? null;
   }
 
-  toMips(): string | null {
+  override toMips(): string | null {
     if (!this.spec?.mnemonic) {
       return null;
     }
