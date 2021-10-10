@@ -47,3 +47,12 @@ export function getRegisterName(binary: string): string {
   const registerName = registers.find(r => r.number === registerNumber)?.name ?? 'unknown';
   return `\$${registerName}`;
 }
+
+export function getRegisterNumberFromName(name: string): number | null {
+  const nameAsNumber = parseInt(name);
+  if (isNaN(nameAsNumber)) {
+    return registers.find(r => r.name === name)?.number ?? null;
+  } else {
+    return nameAsNumber;
+  }
+}

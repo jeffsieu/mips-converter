@@ -1,50 +1,60 @@
 <script lang="ts">
 	import { parseInstruction } from './instructions';
+import { getMipsInstructionBinary } from './instructions/parser';
 	import { binToHex, getZeroPadding, hexToBin } from './utils';
+
+	type InputType = 'encoded' | 'mips';
 
 	let hexInput: string;
 	let binInput: string;
+	let instructionInput: string;
 	let isInputHex = true;
+	let inputType: InputType = 'encoded';
+
+	// Settings
 	let showRegisterName = true;
 
 	function toggleInput() {
+		console.log('toggling input');
 		isInputHex = !isInputHex;
+	}
+
+	function toggleInputType() {
+		inputType = inputType === 'encoded' ? 'mips' : 'encoded';
 	}
 
 	let binary: string;
 	let isInputValid: boolean;
 
-	$: if (isInputHex) {
-		const matches = (hexInput ?? '').match(/^(?:0x)?([0-9a-fA-F]{0,8})/);
-		const extractedHex = matches ? matches[1] : '';
-		binary = hexToBin(extractedHex);
-		binInput = binary;
-		isInputValid = matches !== null;
-	} else {
-		const matches = (binInput ?? '').match(/^(?:0x)?([0-1]{0,32})/);
-		const extractedBin = matches ? matches[1] : '';
-		binary = extractedBin;
-		hexInput = binToHex(binary);
-		isInputValid = matches !== null;
+	$: {
+		if (inputType === 'encoded') {
+			if (isInputHex) {
+				const matches = (hexInput ?? '').match(/^(?:0x)?([0-9a-fA-F]{0,8})/);
+				const extractedHex = matches ? matches[1] : '';
+				binary = hexToBin(extractedHex);
+				binInput = binary;
+				isInputValid = matches !== null;
+			} else {
+				const matches = (binInput ?? '').match(/^(?:0x)?([0-1]{0,32})/);
+				const extractedBin = matches ? matches[1] : '';
+				binary = extractedBin;
+				hexInput = binToHex(binary);
+				isInputValid = matches !== null;
+			}
+		} else {
+			// Input type is mips
+			binary = getMipsInstructionBinary(instructionInput?.trim() ?? '') ?? '';
+		}
 	}
 
 	$: fullBinary = binary.padEnd(32, '0');
 	$: fullHexadecimal = parseInt(fullBinary, 2).toString(16).padStart(8, '0');
-
-	$: padding = getZeroPadding(binary);
-	$: inputType = isInputHex ? 'hexadecimal' : 'binary';
-
-
-	// $: opcode = getOpcode(binary.substring(0, 6));
-	// $: fields = parseInstructionFields(binary, showRegisterName);
+	$: hexDisplay = binToHex(binary);
+	$: binDisplay = binary.padEnd(32, '0');
 
 	$: instruction = parseInstruction(binary, showRegisterName);
 	$: fields = instruction?.fields ?? [];
-
-	$: mipsInstruction = instruction.toMips();
-
-	$: hexDisplay = binToHex(binary);
-	$: binDisplay = binary.padEnd(32, '0');
+	$: mipsInstruction = instruction.toMips();	
 </script>
 
 <main>
@@ -54,23 +64,42 @@
 		{#if !isInputValid}
 			<p>Error in input</p>
 		{/if}
-		
-		<button id="change-input-button" class="icon-button" on:click={toggleInput}>
-			<label for="change-input-button">as {isInputHex ? 'hexadecimal' : 'binary'}</label>
-			<span class="material-icons">
-				sync
-			</span>
-		</button>
-		{#if isInputHex}
-			<div class="input full-width">
-				<input id="hexInput" class="code" bind:value={hexInput} placeholder="0x12345678"/>
+		<div>
+			<button id="change-input-type-button" class="icon-button outlined" on:click={toggleInputType}>
+				<label for="change-input-type-button">using {inputType}</label>
+				<span class="material-icons">
+					sync
+				</span>
+			</button>
+		</div>
+		<div class="split">
+			<div>
+				<h3>encoded instruction</h3>
+				<button id="change-input-button" class="icon-button outlined" on:click={toggleInput}>
+					<label for="change-input-button">as {isInputHex ? 'hexadecimal' : 'binary'}</label>
+					<span class="material-icons">
+						sync
+					</span>
+				</button>
+				
+				{#if isInputHex}
+					<div class="input full-width">
+						<input id="hexInput" class="code" bind:value={hexInput} placeholder="0x12345678"/>
+					</div>
+				{/if}
+				{#if !isInputHex}
+					<div class="input full-width">
+						<input id="binInput" class="code" bind:value={binInput} placeholder="0..."/>
+					</div>
+				{/if}
 			</div>
-		{/if}
-		{#if !isInputHex}
-			<div class="input full-width">
-				<input id="binInput" class="code bin-input" bind:value={binInput} placeholder="0..."/>
+			<div>
+				<h3>mips instruction</h3>
+				<div class="input full-width">
+					<input id="mipsInput" class="code" bind:value={instructionInput} placeholder="add ..."/>
+				</div>
 			</div>
-		{/if}
+		</div>
 	</section>
 	<section>
 		<h2>Bit information</h2>
@@ -157,6 +186,22 @@
 		padding: 1em;
 		max-width: 50rem;
 		margin: 0 auto;
+	}
+
+	.icon-button.outlined {
+		border: 1px solid var(--clr-on);
+	}
+
+	.split {
+		display: flex;
+	}
+
+	.split > * {
+		flex: 1;
+	}
+
+	.split > *:not(:first-child) {
+		margin-inline-start: 1rem;
 	}
 
 	.code {
