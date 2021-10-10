@@ -11,7 +11,7 @@ function formatIInstruction(mnemonic: string, fields: InstructionField<number>[]
   switch (mnemonic) {
     case 'beq':
     case 'bne':
-      return `${fieldValues[1]}, ${fieldValues[0]}, PC + 4 + ${fieldValues[2]}`;
+      return `${fieldValues[1]}, ${fieldValues[0]}, ${fieldValues[2]}`;
     case 'lbu':
     case 'lhu':
     case 'll':

@@ -9,7 +9,6 @@ export default class JInstruction extends Instruction {
 
   constructor(opcode: InstructionField<6>, jumpAddress: InstructionField<26>) {
     super(opcode);
-    console.log(jumpAddress);
     this.jumpAddress = jumpAddress;
     this.fields = [opcode, jumpAddress];
     this.spec = instructionSpecs.find(spec => spec.opcode === this.opcode.interpolatedValue) ?? null;

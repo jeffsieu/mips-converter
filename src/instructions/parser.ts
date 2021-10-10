@@ -131,8 +131,6 @@ export function getMipsInstructionBinary(mipsInstruction: string): string | null
       return null;
     }
 
-    console.log(r2);
-
     if (r2) {
       // mne $t1, $t2, $3 format
 
@@ -197,7 +195,11 @@ export function getMipsInstructionBinary(mipsInstruction: string): string | null
       return null;
     }
 
-    // TODO: Assert that mnenomic is a jump instruction
+    if (instructionSpec.type !== 'J') {
+      console.log("Valid jump format but invalid mnemonic");
+      return null;
+    }
+    
     const opcodeBits = instructionSpec.opcode.toString(2).padStart(6, '0');
     const jumpAddressBits = parseInt(jumpAddress).toString(2).padStart(26, '0');
 

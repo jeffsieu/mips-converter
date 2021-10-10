@@ -2,9 +2,10 @@
 	import { parseInstruction } from './instructions';
 import { BinFormat, DecFormat, HexFormat, ImmediateFormat } from './instructions/format/format';
 	import { getMipsInstructionBinary } from './instructions/parser';
-	import { binToHex, getZeroPadding, hexToBin } from './utils';
+	import { binToHex, hexToBin } from './utils';
 
 	type InputType = 'encoded' | 'mips';
+	type RegisterMode = 'names' | 'numbers';
 	const immediateFormats = [new HexFormat(), new DecFormat(), new BinFormat()];	
 
 	let hexInput: string;
@@ -14,7 +15,7 @@ import { BinFormat, DecFormat, HexFormat, ImmediateFormat } from './instructions
 	let inputType: InputType = 'encoded';
 
 	// Settings
-	let showRegisterName = true;
+	let registerMode: RegisterMode = 'names';
 	let showImmediateAs: ImmediateFormat = immediateFormats[0];
 
 	function toggleInput(): void {
@@ -54,21 +55,21 @@ import { BinFormat, DecFormat, HexFormat, ImmediateFormat } from './instructions
 	$: hexDisplay = binToHex(binary);
 	$: binDisplay = binary.padEnd(32, '0');
 
-	$: instruction = parseInstruction(binary, showRegisterName, showImmediateAs);
+	$: instruction = parseInstruction(binary, registerMode === 'names', showImmediateAs);
 	$: fields = instruction?.fields ?? [];
-	$: mipsInstruction = instruction?.toMips() ?? null;	
+	$: mipsInstruction = instruction?.toMips() ?? null;
 </script>
 
 <main>
 	<h1>mips converter</h1>
-	<section>
+	<section class="raised">
 		<form autocomplete="off" on:submit={(e) => e.preventDefault()}>
-			<h2>Input</h2>
+			<h2 class="remove-margin-top">Input</h2>
 			{#if !isInputValid}
 				<p>Error in input</p>
 			{/if}
 			<div>
-				<button id="change-input-type-button" class="icon-button outlined" on:click={toggleInputType}>
+				<button id="change-input-type-button" class="icon-button" on:click={toggleInputType}>
 					<label for="change-input-type-button">using {inputType}</label>
 					<span class="material-icons">
 						sync
@@ -93,7 +94,7 @@ import { BinFormat, DecFormat, HexFormat, ImmediateFormat } from './instructions
 						<input id="binInput" class="code" bind:value={binInput} placeholder="01011001..."/>
 					</div>
 					{/if}
-					<button id="change-input-button" class="icon-button outlined" on:click={toggleInput}>
+					<button id="change-input-button" class="icon-button" on:click={toggleInput}>
 						<label for="change-input-button">as {isInputHex ? 'hexadecimal' : 'binary'}</label>
 						<span class="material-icons">
 							sync
@@ -109,8 +110,8 @@ import { BinFormat, DecFormat, HexFormat, ImmediateFormat } from './instructions
 			</div>
 		</form>
 	</section>
-	<section>
-		<h2>Bit information</h2>
+	<section class="raised">
+		<h2 class="remove-margin-top">Bit information</h2>
 		<table class="code-table raw-table transparent">
 			<tr>
 				<!-- <th class="vertical-th"></th> -->
@@ -148,28 +149,38 @@ import { BinFormat, DecFormat, HexFormat, ImmediateFormat } from './instructions
 			</tbody>
 		</table>
 	</section>
-	<section id="decoded-instruction-section" class="bg-primary panel" style="position: relative">
+	<section id="decoded-instruction-section" class="raised">
 		<h2 style="margin-block-start: 0;">MIPS instruction</h2>
-		<p id="mips-instruction" class="code">
-			{mipsInstruction ?? 'unknown'}
-		</p>
+		<div>
+			<span id="mips-instruction" class="code inset">
+				{mipsInstruction ?? 'unknown'}
+			</span>
+		</div>
+		<div><span class="code inset">0x{fullHexadecimal}</span></div>
+		<div><span class="code inset">0b{fullBinary}</span></div>
 		<div id="settings">
-			<label for="immediateFormat">Display immediate as:</label>
-			<select id="immediateFormat" bind:value={showImmediateAs}>
-				{#each immediateFormats as format}
-					<option value={format}>
-						{format.name}
-					</option>
-				{/each}
-			</select>
+			<div class="setting">
+				<label for="immediateFormat">Display immediate as:</label>
+				<select id="immediateFormat" bind:value={showImmediateAs}>
+					{#each immediateFormats as format}
+						<option value={format}>
+							{format.name}
+						</option>
+					{/each}
+				</select>
+			</div>
+			<div class="setting">
+				<label for="registerMode">Show registers as:</label>
+				<select id="registerMode" bind:value={registerMode}>
+					{#each ['names', 'numbers'] as mode}
+						<option value={mode}>
+							{mode}
+						</option>
+					{/each}
+				</select>
+			</div>
 		</div>
 		<h3>Info</h3>
-		<p class='instruction-encoding'>
-			Hex: <span class="code">0x{fullHexadecimal}</span>
-		</p>
-		<p class='instruction-encoding'>
-			Binary: <span class="code">0b{fullBinary}</span>
-		</p>
 		<table id="fields" class="code-table">
 			<thead>
 				<tr>
@@ -206,10 +217,6 @@ import { BinFormat, DecFormat, HexFormat, ImmediateFormat } from './instructions
 		--table-border-width: 0.1rem;
 	}
 
-	.icon-button.outlined {
-		border: 1px solid var(--clr-on);
-	}
-
 	.split {
 		display: flex;
 	}
@@ -231,22 +238,23 @@ import { BinFormat, DecFormat, HexFormat, ImmediateFormat } from './instructions
 		opacity: 50%;
 	}
 
-	.panel {
+	.remove-margin-top {
+		margin-block-start: 0;
+	}
+
+	.raised {
+		box-shadow:  8px 8px 36px #232c3b,
+             -8px -8px 36px #37445d;
+		border-radius: 1rem;
 		margin-inline: -1rem;
+		margin-block-end: 2rem;
 		padding-inline: 1rem;
-		padding-block: 1rem;
-		border-radius: 0.5rem;
+		padding-block: 1.5rem;
 	}
 
 	table.transparent,
 	table.transparent td {
 		border-color: transparent;
-	}
-
-	.bg-primary {
-		background-color: var(--clr-primary-400);
-		color: var(--clr-on-primary);
-		--clr-on: var(--clr-on-primary);
 	}
 
 	.raw-table {
@@ -299,18 +307,10 @@ import { BinFormat, DecFormat, HexFormat, ImmediateFormat } from './instructions
 
 	.icon-button {
 		display: flex;
-		align-items: center;
-		border: none;
-		background-color: transparent;
-		color: var(--clr-on);
-		border-radius: 0.5rem;
-		/* margin: auto; */
+		align-items: end;
 		padding-inline: 0.5rem;
 		padding-block: 0.5rem;
-		/* width: 48px; */
-		/* height: 48px; */
 		vertical-align: middle;
-		transition: background 0.2s;
 		text-align: center;
 	}
 
@@ -323,11 +323,6 @@ import { BinFormat, DecFormat, HexFormat, ImmediateFormat } from './instructions
 		margin-inline: 0.3rem;
 	}
 
-	.icon-button:not(:disabled):hover,
-	.icon-button:not(:disabled):active {
-		background-color: var(--clr-background-dark);
-	}
-
 	.input.full-width input {
 		width: 100%;
 	}
@@ -336,25 +331,64 @@ import { BinFormat, DecFormat, HexFormat, ImmediateFormat } from './instructions
 		margin-block-end: 0.2em;
 	}
 
-	.instruction-encoding {
-		margin-block: 0.5rem;
-	}
-
-	#decoded-instruction-section {
-		margin-block-start: 5rem;
+	.setting label {
+		font-size: 1rem;
+		font-weight: bold;
+		margin-block-end: 0.5rem;
 	}
 
 	#change-input-button {
 		margin: 0;
 	}
 
+	#settings {
+		margin-block-start: 2em;
+		display: flex;
+	}
+
+	#settings > .setting {
+		margin-inline-end: 2rem;
+	}
+
 	#mips-instruction {
 		font-size: 1.5rem;
+		color: var(--clr-on-background);
+		display: inline-block;
+		padding-inline: 1rem;
+		padding-block: 0.5rem;
+		margin-block-start: 0;
+	}
+
+	.inset {
+		box-shadow: inset 5px 5px 7px #273142,
+            inset -5px -5px 7px #333f56;
+		border-radius: 0.5rem;
+		display: inline-block;
+		padding-inline: 1em;
+		padding-block: 0.5em;
+		margin-block-end: 0.5em;
 	}
 
 	@media (max-width: 640px) {
 		main {
 			max-width: none;
+		}
+
+		.split {
+			display: block;
+		}
+
+		.split > *:not(:first-child) {
+			margin-inline-start: 0rem;
+		}
+
+		
+		#settings {
+			display: block;
+		}
+
+		#settings > .setting {
+			margin-inline-end: 0;
 		}
 	}
 </style>

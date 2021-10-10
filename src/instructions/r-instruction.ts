@@ -56,7 +56,6 @@ export default class RInstruction extends Instruction {
     this.funct = funct;
     this.fields = [opcode, rs, rt, rd, shamt, funct];
     this.spec = instructionSpecs.find(spec => spec.functionCode === this.funct.interpolatedValue) ?? null;
-    console.log(this.spec);
   }
 
   toMips(): string | null {
@@ -70,9 +69,6 @@ export default class RInstruction extends Instruction {
         .sort((f1, f2) => fieldsInInstruction.indexOf(f1.name) - fieldsInInstruction.indexOf(f2.name))
         .map(f => f.value).join(', ');
 
-    console.log(this.fields
-      .filter(f => fieldsInInstruction.includes(f.name) && usedFieldNames.includes(f.name)));
-    
     const mipsInstruction = this.spec!.mnemonic + ' ' + commaDelimitedRegisters;
     return mipsInstruction;
   }
