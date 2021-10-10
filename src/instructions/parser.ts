@@ -51,7 +51,7 @@ export function parseInstruction(binary: string, showRegisterName: boolean, imme
       return new IInstruction(opcode, rs, rt, immediate);
     }
     case 'J': {
-      const jumpAddress = extractor.extractField('jaddr', 26, getJumpAddress);
+      const jumpAddress = extractor.extractField('jaddr', 26, getJumpAddress(immediateFormat));
       return new JInstruction(opcode, jumpAddress);
     }
     case 'U':
@@ -101,7 +101,6 @@ function parseMipsInstructionWithImmediate(mnemonic: string, rDest: string, rSou
     const immediateBits = parseInt(immediate).toString(2).padStart(16, '0');
     return opcodeBits + rSourceBits + rDestBits + immediateBits;
   }
-
 }
 
 

@@ -29,8 +29,8 @@ export function getImmediate(immediateFormat: ImmediateFormat) {
   return (immediate: string) => immediateFormat.format(immediate);
 }
 
-export function getJumpAddress(address: string) {
-  return '0x' + (parseInt(address, 2) * 4).toString(16);
+export function getJumpAddress(immediateFormat: ImmediateFormat) {
+  return (address: string) => immediateFormat.format(address);
 }
 
 export function getUnknown(bits: string) {
