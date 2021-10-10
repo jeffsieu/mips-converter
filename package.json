@@ -1,6 +1,7 @@
 {
-  "name": "svelte-app",
+  "name": "mips-converter",
   "version": "1.0.0",
+  "homepage": "https://jeffsieu.github.io/mips-converter/",
   "private": true,
   "scripts": {
     "build": "rollup -c",
