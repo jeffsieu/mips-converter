@@ -3,12 +3,15 @@
 	--clr-primary-400: #8CC8FF;
 	--clr-background: #2E394D;
 	--clr-background-dark: #1a273d;
+	--clr-background-disabled: #354053;
 
 	--clr-on-background: #FFFFFF;
 	--clr-on-background-secondary: #C5C5C5;
 	--clr-on-primary: #131820;
 
+	
 	--clr-on: var(--clr-on-background);
+	--clr-disabled: rgba(255, 255, 255, 0.2);
 }
 
 body {
@@ -64,7 +67,8 @@ input, button, select, textarea {
 }
 
 input:disabled {
-	color: #ccc;
+	color: var(--clr-disabled);
+	background-color: var(--clr-background-disabled);
 }
 
 button {
@@ -75,6 +79,10 @@ button {
 
 button:disabled {
 	color: #999;
+}
+
+fieldset:disabled {
+	color: var(--clr-disabled);
 }
 
 button:not(:disabled):active {
@@ -90,6 +98,15 @@ input {
 	background: var(--clr-background-dark);
 	color: var(--clr-on);
 	font-size: 1.2rem;
+}
+
+input:disabled::placeholder {
+	opacity: 0.5;
+}
+
+fieldset {
+	border: none;
+	padding: 0;
 }
 
 h2 {
