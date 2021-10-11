@@ -61,7 +61,6 @@
 		} else {
 			// Input type is mips
 			const encoder = new MipsEncoder(instructionInput?.trim() ?? '');
-			console.log(encoder.getParseInfo())
 			mipsParseInfo = encoder.getParseInfo();
 			binary = encoder.get() ?? '';
 		}

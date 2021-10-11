@@ -55,7 +55,7 @@ export default class IInstruction extends Instruction {
     super(
       opcode,
       [opcode, rs, rt, immediate], // fields
-      instructionSpecs.find(spec => spec.opcode === this.opcode.interpolatedValue) ?? null // instructionSpec
+      instructionSpecs.find(spec => spec.opcode === opcode.interpolatedValue) ?? null // instructionSpec
     );
     this.rs = rs;
     this.rt = rt;

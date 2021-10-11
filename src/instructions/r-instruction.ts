@@ -67,7 +67,7 @@ export default class RInstruction extends Instruction {
   ) {
     super(opcode,
       [opcode, rs, rt, rd, shamt, funct], // fields
-      instructionSpecs.find(spec => spec.functionCode === this.funct.interpolatedValue) ?? null, // instructionSpec
+      instructionSpecs.find(spec => spec.functionCode === funct.interpolatedValue) ?? null, // instructionSpec
     );
     this.rs = rs;
     this.rt = rt;

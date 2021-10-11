@@ -22,7 +22,7 @@ export default class JInstruction extends Instruction {
     super(
       opcode,
       [opcode, jumpAddress], // fields
-      instructionSpecs.find(spec => spec.opcode === this.opcode.interpolatedValue) ?? null, // instructionSpec
+      instructionSpecs.find(spec => spec.opcode === opcode.interpolatedValue) ?? null, // instructionSpec
     );
     this.jumpAddress = jumpAddress;
   }
