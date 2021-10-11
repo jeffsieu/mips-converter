@@ -1,17 +1,15 @@
-import instructionSpecs from './data/instructionSpec.json';
-import type { ImmediateFormat } from './format/format';
-
+import instructionSpecs from '../data/instructionSpec.json';
+import FieldExtractor from './field-extractor';
 import Instruction from "./instruction";
 import type InstructionField from './instruction-field';
+import { getImmediate, getOpcodeValue, getRegisterName, getRegisterNumber } from './parser/extractors';
+import type { Settings } from './settings';
 import type { RegisterField, FieldName } from "./types";
 
 function formatIInstruction(mnemonic: string, fields: InstructionField<number>[]): string {
   // Fields = [rs, rt, immed]
   const fieldValues = fields.map(f => f.value);
   switch (mnemonic) {
-    case 'beq':
-    case 'bne':
-      return `${fieldValues[1]}, ${fieldValues[0]}, ${fieldValues[2]}`;
     case 'lbu':
     case 'lhu':
     case 'll':
@@ -23,6 +21,8 @@ function formatIInstruction(mnemonic: string, fields: InstructionField<number>[]
     case 'sh':
     case 'sw':
       return `${fieldValues[1]}, ${fieldValues[2]}(${fieldValues[0]})`;
+    case 'beq':
+    case 'bne':
     default:
       // format: addi r1, r2, immed
       return `${fieldValues[1]}, ${fieldValues[0]}, ${fieldValues[2]}`;
@@ -34,18 +34,32 @@ export default class IInstruction extends Instruction {
   readonly rt: RegisterField;
   readonly immediate: InstructionField<16>;
 
+  static fromBinary(binary: string, settings: Settings): IInstruction {
+    const extractor = new FieldExtractor(binary);
+    const getRegister = settings.registerMode === 'names' ? getRegisterName : getRegisterNumber;
+    
+    const opcode = extractor.extractField('opcode', 6, getOpcodeValue);
+    const rs = extractor.extractField('rs', 5, getRegister);
+    const rt = extractor.extractField('rt', 5, getRegister);
+    const immediate = extractor.extractField('immed', 16, getImmediate(settings.immediateFormat));
+
+    return new IInstruction(opcode, rs, rt, immediate);
+  }
+
   constructor(
     opcode: InstructionField<6>,
     rs: RegisterField,
     rt: RegisterField,
     immediate: InstructionField<16>,
   ) {
-    super(opcode);
+    super(
+      opcode,
+      [opcode, rs, rt, immediate], // fields
+      instructionSpecs.find(spec => spec.opcode === this.opcode.interpolatedValue) ?? null // instructionSpec
+    );
     this.rs = rs;
     this.rt = rt;
     this.immediate = immediate;
-    this.fields = [opcode, rs, rt, immediate];
-    this.spec = instructionSpecs.find(spec => spec.opcode === this.opcode.interpolatedValue) ?? null;
   }
 
   override toMips(): string | null {

@@ -14,10 +14,6 @@
 	--clr-disabled: rgba(255, 255, 255, 0.2);
 }
 
-body {
-	background-color: #2E394D;
-}
-
 html, body {
 	position: relative;
 	width: 100%;
@@ -26,6 +22,7 @@ html, body {
 }
 
 body {
+	background-color: #2E394D;
 	color: var(--clr-on-background);
 	margin: 0;
 	box-sizing: border-box;
@@ -48,6 +45,10 @@ a:hover {
 
 a:visited {
 	color: rgb(0,80,160);
+}
+
+.error {
+	color: rgb(246, 162, 162);
 }
 
 label {

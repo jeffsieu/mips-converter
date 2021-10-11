@@ -1,6 +1,7 @@
-import instructions from '../data/instructionSpec.json';
-import registers from '../data/registers.json';
+import instructions from '../../data/instructionSpec.json';
+import registers from '../../data/registers.json';
 import type { ImmediateFormat } from '../format/format';
+import type { InstructionSpec } from '../types';
 
 const rInstructions = instructions.filter(i => i.functionCode !== null);
 
@@ -55,4 +56,8 @@ export function getRegisterNumberFromName(name: string): number | null {
   } else {
     return nameAsNumber;
   }
+}
+
+export function getInstructionSpecWithMnemonic(mnemonic: string): InstructionSpec | null {
+  return instructions.find(i => i.mnemonic === mnemonic) ?? null;
 }

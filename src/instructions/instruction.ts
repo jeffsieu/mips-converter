@@ -3,11 +3,13 @@ import type { InstructionSpec } from "./types";
 
 export default abstract class Instruction {
   opcode: InstructionField<6>;
-  fields: Array<InstructionField<number>>;
+  fields: InstructionField<number>[];
   spec: InstructionSpec | null;
 
-  constructor(opcode: InstructionField<6>) {
+  protected constructor(opcode: InstructionField<6>, fields: InstructionField<number>[], spec: InstructionSpec | null) {
     this.opcode = opcode;
+    this.fields = fields;
+    this.spec = spec;
   }
 
   abstract toMips(): string | null;

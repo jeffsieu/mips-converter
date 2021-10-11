@@ -1,6 +1,9 @@
-import instructionSpecs from './data/instructionSpec.json';
+import instructionSpecs from '../data/instructionSpec.json';
+import FieldExtractor from './field-extractor';
 import Instruction from "./instruction";
 import type InstructionField from './instruction-field';
+import { getFunctionCode, getOpcodeValue, getRegisterName, getRegisterNumber, getShiftAmount } from './parser/extractors';
+import type { Settings } from './settings';
 import type { RegisterField, FieldName, InstructionSpec } from "./types";
 
 function getRelevantFields(spec: InstructionSpec): FieldName[] {
@@ -40,6 +43,20 @@ export default class RInstruction extends Instruction {
   readonly shamt: InstructionField<5>;
   readonly funct: InstructionField<6>;
 
+  static fromBinary(binary: string, settings: Settings) {
+    const extractor = new FieldExtractor(binary);
+    const getRegister = settings.registerMode === 'names' ? getRegisterName : getRegisterNumber;
+    
+    const opcode = extractor.extractField('opcode', 6, getOpcodeValue);
+    const rs = extractor.extractField('rs', 5, getRegister);
+    const rt = extractor.extractField('rt', 5, getRegister);
+    const rd = extractor.extractField('rd', 5, getRegister);
+    const shamt = extractor.extractField('shamt', 5, getShiftAmount);
+    const funct = extractor.extractField('funct', 6, getFunctionCode);
+
+    return new RInstruction(opcode, rs, rt, rd, shamt, funct);
+  }
+
   constructor(
     opcode: InstructionField<6>,
     rs: RegisterField,
@@ -48,14 +65,15 @@ export default class RInstruction extends Instruction {
     shamt: InstructionField<5>,
     funct: InstructionField<6>,
   ) {
-    super(opcode);
+    super(opcode,
+      [opcode, rs, rt, rd, shamt, funct], // fields
+      instructionSpecs.find(spec => spec.functionCode === this.funct.interpolatedValue) ?? null, // instructionSpec
+    );
     this.rs = rs;
     this.rt = rt;
     this.rd = rd;
     this.shamt = shamt;
     this.funct = funct;
-    this.fields = [opcode, rs, rt, rd, shamt, funct];
-    this.spec = instructionSpecs.find(spec => spec.functionCode === this.funct.interpolatedValue) ?? null;
   }
 
   toMips(): string | null {

@@ -1,6 +1,14 @@
 import InstructionField from "./instruction-field";
 import type { FieldName } from "./types";
 
+
+
+class RInstructionFieldExtract {
+  extractFields() {
+
+  }
+
+}
 export default class FieldExtractor {
   bits: string;
 

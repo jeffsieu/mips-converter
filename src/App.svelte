@@ -1,61 +1,79 @@
 <script lang="ts">
-	import { parseInstruction } from './instructions';
-import { BinFormat, DecFormat, HexFormat, ImmediateFormat } from './instructions/format/format';
-	import { getMipsInstructionBinary } from './instructions/parser';
+	import type { Instruction } from './instructions';
+	import { BinFormat, DecFormat, HexFormat, ImmediateFormat } from './instructions/format/format';
+	import { MipsDecoder, MipsEncoder } from './instructions/parser/mips-parser';
+	import { BinInputParser, HexInputParser } from './instructions/parser/input-parser';
+	import type { ParseInfo } from './instructions/parser/parse-info';
 	import { binToHex, hexToBin } from './utils';
+	import type { Settings } from './instructions/settings';
 
-	type InputType = 'encoded' | 'mips';
-	type RegisterMode = 'names' | 'numbers';
 	const immediateFormats = [new HexFormat(), new DecFormat(), new BinFormat()];	
 
 	let hexInput: string;
 	let binInput: string;
 	let instructionInput: string;
-	let isInputHex = true;
-	let inputType: InputType = 'encoded';
+	// let isInputHex = true;
+	// let inputType: InputType = 'encoded';
+	let encodedParseInfo: ParseInfo | null = null;
+	let mipsParseInfo: ParseInfo | null = null;
 
 	// Settings
-	let registerMode: RegisterMode = 'names';
-	let showImmediateAs: ImmediateFormat = immediateFormats[0];
+	let settings: Settings = {
+		encodedInputMode: 'hex',
+		inputMode: 'encoded',
+		registerMode: 'names',
+		immediateFormat: immediateFormats[0],
+	};
+	// let registerMode: RegisterMode = 'names';
+	// let showImmediateAs: ImmediateFormat = immediateFormats[0];
 
 	function toggleInput(): void {
-		isInputHex = !isInputHex;
+		settings.encodedInputMode = settings.encodedInputMode === 'hex' ? 'binary' : 'hex';
 	}
 
 	function toggleInputType(): void {
-		inputType = inputType === 'encoded' ? 'mips' : 'encoded';
+		settings.inputMode = settings.inputMode === 'encoded' ? 'mips' : 'encoded';
 	}
 
 	let binary: string;
-	let isInputValid: boolean;
 
 	$: {
-		if (inputType === 'encoded') {
-			if (isInputHex) {
-				const matches = (hexInput ?? '').match(/^(?:0x)?([0-9a-fA-F]{0,8})/);
-				const extractedHex = matches ? matches[1] : '';
-				binary = hexToBin(extractedHex);
+		if (settings.inputMode === 'encoded') {
+			if (settings.encodedInputMode === 'hex') {
+				const parser = new HexInputParser(hexInput ?? '');
+
+				// Update binary
+				binary = hexToBin(parser.get());
+
+				// Update other input
 				binInput = binary;
-				isInputValid = matches !== null;
+				encodedParseInfo = parser.getParseInfo();
 			} else {
-				const matches = (binInput ?? '').match(/^(?:0x)?([0-1]{0,32})/);
-				const extractedBin = matches ? matches[1] : '';
-				binary = extractedBin;
+				const parser = new BinInputParser(binInput ?? '');
+
+				// Update binary
+				binary = parser.get();
+
+				// Update other input
 				hexInput = binToHex(binary);
-				isInputValid = matches !== null;
+				encodedParseInfo = parser.getParseInfo();
 			}
 		} else {
 			// Input type is mips
-			binary = getMipsInstructionBinary(instructionInput?.trim() ?? '') ?? '';
+			const encoder = new MipsEncoder(instructionInput?.trim() ?? '');
+			console.log(encoder.getParseInfo())
+			mipsParseInfo = encoder.getParseInfo();
+			binary = encoder.get() ?? '';
 		}
 	}
 
 	$: fullBinary = binary.padEnd(32, '0');
 	$: fullHexadecimal = parseInt(fullBinary, 2).toString(16).padStart(8, '0');
 	$: hexDisplay = binToHex(binary);
-	$: binDisplay = binary.padEnd(32, '0');
 
-	$: instruction = parseInstruction(binary, registerMode === 'names', showImmediateAs);
+
+	let instruction: Instruction;
+	$: instruction = new MipsDecoder(binary, settings).get();
 	$: fields = instruction?.fields ?? [];
 	$: mipsInstruction = instruction?.toMips() ?? null;
 </script>
@@ -65,47 +83,64 @@ import { BinFormat, DecFormat, HexFormat, ImmediateFormat } from './instructions
 	<section class="raised">
 		<form autocomplete="off" on:submit={(e) => e.preventDefault()}>
 			<h2 class="remove-margin-top">Input</h2>
-			{#if !isInputValid}
-				<p>Error in input</p>
-			{/if}
 			<div>
 				<button id="change-input-type-button" class="icon-button" on:click={toggleInputType}>
-					<label for="change-input-type-button">using {inputType}</label>
+					<label for="change-input-type-button">using {settings.inputMode}</label>
 					<span class="material-icons">
 						sync
 					</span>
 				</button>
 			</div>
 			<div class="split">
-				<fieldset disabled={inputType === 'mips'}>
+				<fieldset disabled={settings.inputMode === 'mips'}>
 					<h3>encoded instruction</h3>
-					{#if isInputHex}
+					{#if settings.encodedInputMode === 'hex'}
 					<div class="input full-width">
 						<input
 							id="hexInput"
 							class="code"
 							bind:value={hexInput}
 							placeholder="0x12345678"
+							autofocus
 						/>
 					</div>
 					{/if}
-					{#if !isInputHex}
+					{#if settings.encodedInputMode === 'binary'}
 					<div class="input full-width">
-						<input id="binInput" class="code" bind:value={binInput} placeholder="01011001..."/>
+						<input
+							id="binInput"
+							class="code"
+							bind:value={binInput}
+							placeholder="01011001..."
+							autofocus
+						/>
 					</div>
 					{/if}
+					
+					{#if encodedParseInfo !== null}
+						<p class="error">{encodedParseInfo.value}</p>
+					{/if}
 					<button id="change-input-button" class="icon-button" on:click={toggleInput}>
-						<label for="change-input-button">as {isInputHex ? 'hexadecimal' : 'binary'}</label>
+						<label for="change-input-button">as {settings.encodedInputMode}</label>
 						<span class="material-icons">
 							sync
 						</span>
 					</button>
 				</fieldset>
-				<fieldset disabled={inputType === 'encoded'}>
+				<fieldset disabled={settings.inputMode === 'encoded'}>
 					<h3>mips instruction</h3>
 					<div class="input full-width">
-						<input id="mipsInput" class="code" bind:value={instructionInput} placeholder="add ..."/>
+						<input
+							id="mipsInput"
+							class="code"
+							bind:value={instructionInput}
+							placeholder="add ..."
+							autofocus
+						/>
 					</div>
+					{#if mipsParseInfo !== null}
+						<p class="error">{mipsParseInfo.value}</p>
+					{/if}
 				</fieldset>
 			</div>
 		</form>
@@ -125,7 +160,7 @@ import { BinFormat, DecFormat, HexFormat, ImmediateFormat } from './instructions
 			<tbody>
 				<tr>
 					<th class="vertical-th">Binary</th>
-					{#each (binDisplay.match(/.{1,4}/g) ?? []) as chunk, i}
+					{#each (fullBinary.match(/.{1,4}/g) ?? []) as chunk, i}
 						<td>
 							{#if i * 4 >= binary.length}
 								<span class="gray">{chunk}</span>
@@ -142,7 +177,7 @@ import { BinFormat, DecFormat, HexFormat, ImmediateFormat } from './instructions
 				</tr>
 				<tr>
 					<th class="vertical-th">Hex</th>
-					{#each hexDisplay.padEnd(8, '0').split('') as chunk, i}
+					{#each fullHexadecimal.split('') as chunk, i}
 						<td class={i >= hexDisplay.length ? 'gray' : ''}>{chunk}</td>
 					{/each}
 				</tr>
@@ -161,7 +196,7 @@ import { BinFormat, DecFormat, HexFormat, ImmediateFormat } from './instructions
 		<div id="settings">
 			<div class="setting">
 				<label for="immediateFormat">Display immediate as:</label>
-				<select id="immediateFormat" bind:value={showImmediateAs}>
+				<select id="immediateFormat" bind:value={settings.immediateFormat}>
 					{#each immediateFormats as format}
 						<option value={format}>
 							{format.name}
@@ -171,7 +206,7 @@ import { BinFormat, DecFormat, HexFormat, ImmediateFormat } from './instructions
 			</div>
 			<div class="setting">
 				<label for="registerMode">Show registers as:</label>
-				<select id="registerMode" bind:value={registerMode}>
+				<select id="registerMode" bind:value={settings.registerMode}>
 					{#each ['names', 'numbers'] as mode}
 						<option value={mode}>
 							{mode}
