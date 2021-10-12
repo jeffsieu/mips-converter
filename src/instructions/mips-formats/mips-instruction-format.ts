@@ -1,36 +1,7 @@
+import { isShiftInstruction, isUnsignedImmediateInstruction, isInstructionDeclaredAsR, isInstructionDeclaredAsI, isLoadStoreInstruction, isJumpInstruction } from "../instruction";
 import { getInstructionSpecWithMnemonic, getRegisterNumberFromName } from "../parser/extractors";
 import type { ParseResult } from "../parser/parse-info";
 import type { InstructionSpec } from "../types";
-
-const shiftMnemonics = ['sll', 'srl', 'sra'];
-const loadStoreMnemonics = ['lbu', 'lhu', 'll', 'lui', 'lw', 'lb', 'sb', 'sc', 'sh', 'sw'];
-
-/**
- * Returns if the instruction in MIPS is declared in the form "mne $r1, $r2, $r3"
- */
-function isInstructionDeclaredAsR(instructionSpec: InstructionSpec): boolean {
-  return instructionSpec.type === 'R' && !isShiftInstruction(instructionSpec);
-}
-
-/**
- * Returns if the instruction in MIPS is declared in the form "mne $r1, $r2, immed"
- */
-function isInstructionDeclaredAsI(instructionSpec: InstructionSpec): boolean {
-  return (instructionSpec.type === 'I' && !isLoadStoreInstruction(instructionSpec))
-    || isShiftInstruction(instructionSpec);
-}
-
-function isShiftInstruction(instructionSpec: InstructionSpec): boolean {
-  return shiftMnemonics.includes(instructionSpec.mnemonic);
-}
-
-function isLoadStoreInstruction(instructionSpec: InstructionSpec): boolean {
-  return loadStoreMnemonics.includes(instructionSpec.mnemonic);
-}
-
-function isJumpInstruction(instructionSpec: InstructionSpec): boolean {
-  return instructionSpec.type === 'J';
-}
 
 function parseRegisterToBits(registerName: string): ParseResult<string> {
   const registerNumber = getRegisterNumberFromName(registerName);
@@ -49,9 +20,58 @@ function parseRegisterToBits(registerName: string): ParseResult<string> {
   };
 }
 
+function parseTwosComplement(value: number, length: number): ParseResult<string> {
+  // Check range
+  const twoToNMinusOne = 2 ** (length - 1);
+  if (value >= twoToNMinusOne || value < -twoToNMinusOne) {
+    return {
+      value: null,
+      message: {
+        value: 'Signed immediate out of range: ' + value,
+        severity: 'error',
+      },
+    };
+  }
+  if (value >= 0) {
+    return {
+      value: value.toString(2).padStart(length, '0'),
+      message: null,
+    };
+  } else {
+    // Calculate the complement
+    const positiveValue = -value;
+    const positiveBits = positiveValue.toString(2).padStart(length, '0');
+    const flippedBits = positiveBits.split('').map(c => c === '0' ? '1' : '0').join('');
+    const flippedAsUnsigned = parseInt(flippedBits, 2);
+    const twosComplementUnsignedValue = flippedAsUnsigned + 1;
+    return {
+      value: twosComplementUnsignedValue.toString(2).padStart(length, '1'),
+      message: null,
+    }
+  }
+}
+
 function parseImmediateWithLengthToBits(fieldName: string, immediate: string, length: number, signed: boolean): ParseResult<string> {
   // No error will be thrown since regex always matches a valid immediate
-  const bits = parseInt(immediate).toString(2).padStart(length, '0');
+  const immediateNumber = parseInt(immediate);
+
+  // Unsigned but given negative value
+  if (!signed && immediateNumber < 0) {
+    return {
+      value: null,
+      message: {
+        value: fieldName + ' is unsigned but given a negative value: ' + immediate,
+        severity: 'error',
+      },
+    };
+  }
+
+  if (signed) {
+    return parseTwosComplement(immediateNumber, length);
+  }
+
+  // Parse as unsigned number
+  const bits = immediateNumber.toString(2).padStart(length, '0');
 
   // Throw error if out of range
   if (bits.length > length) {
@@ -67,14 +87,11 @@ function parseImmediateWithLengthToBits(fieldName: string, immediate: string, le
   return {
     value: bits,
     message: null,
-  }
+  };
 }
 
-function parseImmediateToBits(immediate: string): ParseResult<string> {
-  // TODO: handle negative value for signed immediate instructions
-  // aka everything (including lw, sw), except those like addiu
-
-  return parseImmediateWithLengthToBits('immediate', immediate, 16, false);
+function parseImmediateToBits(immediate: string, signed: boolean): ParseResult<string> {
+  return parseImmediateWithLengthToBits('immediate', immediate, 16, signed);
 }
 
 function parseShiftAmountToBits(shiftAmount: string): ParseResult<string> {
@@ -127,9 +144,14 @@ function getImmediateInstructionBits(instructionSpec: InstructionSpec, args: str
   }
 
   const isShift = isShiftInstruction(instructionSpec);
+  const signed = !isUnsignedImmediateInstruction(instructionSpec);
 
   // args = [rDest, rSource, immediate]
-  const results = [parseRegisterToBits(args[0]), parseRegisterToBits(args[1]), isShift ? parseShiftAmountToBits(args[2]) : parseImmediateToBits(args[2])];
+  const results = [
+    parseRegisterToBits(args[0]),
+    parseRegisterToBits(args[1]),
+    isShift ? parseShiftAmountToBits(args[2]) : parseImmediateToBits(args[2], signed),
+  ];
 
   const message: string = results
                             .filter(result => result.message !== null)

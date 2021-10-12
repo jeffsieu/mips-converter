@@ -1,6 +1,6 @@
 import instructionSpecs from '../data/instructionSpec.json';
 import FieldExtractor from './field-extractor';
-import Instruction from "./instruction";
+import Instruction, { isUnsignedImmediateInstruction } from "./instruction";
 import type InstructionField from './instruction-field';
 import { getImmediate, getOpcodeValue, getRegisterName, getRegisterNumber } from './parser/extractors';
 import type { Settings } from './settings';
@@ -39,9 +39,12 @@ export default class IInstruction extends Instruction {
     const getRegister = settings.registerMode === 'names' ? getRegisterName : getRegisterNumber;
     
     const opcode = extractor.extractField('opcode', 6, getOpcodeValue);
+    const instructionSpec = instructionSpecs.find(spec => spec.opcode === opcode.interpolatedValue) ?? null;
+    const signed = instructionSpec ? !isUnsignedImmediateInstruction(instructionSpec) : false;
+
     const rs = extractor.extractField('rs', 5, getRegister);
     const rt = extractor.extractField('rt', 5, getRegister);
-    const immediate = extractor.extractField('immed', 16, getImmediate(settings.immediateFormat));
+    const immediate = extractor.extractField('immed', 16, getImmediate(signed, settings.immediateFormat));
 
     return new IInstruction(opcode, rs, rt, immediate);
   }
