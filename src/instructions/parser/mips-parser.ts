@@ -1,9 +1,7 @@
 import RInstruction from "../r-instruction";
 import IInstruction from "../i-instruction";
 import JInstruction from "../j-instruction";
-import { getOpcodeValue, getShiftAmount, getFunctionCode, getImmediate, getJumpAddress, getUnknown, getRegisterName, getRegisterNumber } from './extractors'
 import instructionSpecs from '../../data/instructionSpec.json';
-import FieldExtractor from '../field-extractor';
 import type { InstructionType } from "../types";
 import UnknownInstruction from '../unknown-instruction';
 import type Instruction from "../instruction";
@@ -31,7 +29,7 @@ function getType(binary: string): InstructionType | 'U' {
  * Parses a MIPS instruction and returns an Instruction.
  */
 export class MipsDecoder extends Parser<Instruction> {
-  private instruction: Instruction;
+  private readonly instruction: Instruction;
 
   constructor(binary: string, settings: Settings) {
     super();
@@ -69,7 +67,7 @@ export class MipsDecoder extends Parser<Instruction> {
  * Parses a MIPS instruction and returns its binary form.
  */
 export class MipsEncoder extends Parser<string | null> {
-  private result: ParseResult<string>;
+  private readonly result: ParseResult<string>;
 
   constructor(mipsString: string) {
     super();
@@ -97,7 +95,6 @@ export class MipsEncoder extends Parser<string | null> {
         }
       }
     }
-
   }
 
   override get(): string | null {

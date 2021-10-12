@@ -5,16 +5,24 @@ export abstract class ImmediateFormat {
         this.name = name;
     }
 
-    abstract format(binary: string): string;
+    abstract format(value: number): string;
 }
 
 export class HexFormat extends ImmediateFormat {
     constructor() {
         super('hex');
     }
+    
+    override format(value: number): string {
+        if (value >= 0) {
+            return this.formatUnsigned(value);
+        } else {
+            return '-' + this.formatUnsigned(-value);
+        }
+    }
 
-    override format(binary: string): string {
-        return '0x' + parseInt(binary, 2).toString(16);
+    formatUnsigned(value: number): string {
+        return '0x' + value.toString(16);
     }
 }
 
@@ -23,8 +31,8 @@ export class DecFormat extends ImmediateFormat {
         super('decimal');
     }
 
-    override format(binary: string): string {
-        return parseInt(binary, 2).toString(10);
+    override format(value: number): string {
+        return value.toString(10);
     }
 }
 
@@ -33,7 +41,15 @@ export class BinFormat extends ImmediateFormat {
         super('binary');
     }
     
-    override format(binary: string): string {
-        return '0b' + parseInt(binary, 2).toString(2);
+    override format(value: number): string {
+        if (value >= 0) {
+            return this.formatUnsigned(value);
+        } else {
+            return '-' + this.formatUnsigned(-value);
+        }
+    }
+
+    formatUnsigned(value: number): string {
+        return '0b' + value.toString(2);
     }
 }

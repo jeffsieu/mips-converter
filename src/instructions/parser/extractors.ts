@@ -26,12 +26,28 @@ export function getFunctionCode(functionCode: string): string {
   )!.mnemonic;
 }
 
-export function getImmediate(immediateFormat: ImmediateFormat) {
-  return (immediate: string) => immediateFormat.format(immediate);
+function getSignedImmediate(binary: string): number {
+  const firstBit = binary[0];
+  if (firstBit === '0') {
+    return getUnsignedImmediate(binary);
+  } else {
+    const flippedBits = binary.split('').map(b => b === '0' ? '1' : '0').join('');
+    const complement = parseInt(flippedBits, 2) + 1;
+    return -complement;
+  }
+}
+
+function getUnsignedImmediate(binary: string): number {
+  return parseInt(binary, 2);
+}
+
+export function getImmediate(signed: boolean, immediateFormat: ImmediateFormat) {
+  const parseImmediate = signed ? getSignedImmediate : getUnsignedImmediate;
+  return (immediate: string) => immediateFormat.format(parseImmediate(immediate));
 }
 
 export function getJumpAddress(immediateFormat: ImmediateFormat) {
-  return (address: string) => immediateFormat.format(address);
+  return (address: string) => immediateFormat.format(parseInt(address, 2));
 }
 
 export function getUnknown(bits: string) {
