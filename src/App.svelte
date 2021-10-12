@@ -150,7 +150,7 @@
 			<tr>
 				<!-- <th class="vertical-th"></th> -->
 				
-				{#each ['', 32, 28, 24, 16, 12 ,8 ,4, 0] as index}
+				{#each ['', 28, 24, 20, 16, 12, 8, 4, 0] as index}
 					<td style="text-align: right">{index}</td>
 				{/each}
 			</tr>
