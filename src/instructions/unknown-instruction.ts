@@ -1,27 +1,26 @@
-import FieldExtractor from "./field-extractor";
-import Instruction from "./instruction";
-import type InstructionField from "./instruction-field";
-import { getOpcodeValue, getUnknown } from "./parser/extractors";
-import type { Settings } from "./settings";
-
-export type UnknownField = InstructionField<26>;
+import FieldExtractor from './field-extractor';
+import { OpcodeField, UnknownField } from './fields';
+import Instruction from './instruction';
+import type { Settings } from './settings';
+import type { InstructionSpec } from './types';
 
 export default class UnknownInstruction extends Instruction {
   readonly unknown: UnknownField;
 
   static fromBinary(binary: string, settings: Settings): UnknownInstruction {
-    const extractor = new FieldExtractor(binary);
+    const extractor = new FieldExtractor(binary, settings);
 
-    const opcode = extractor.extractField('opcode', 6, getOpcodeValue);
-    const unknown = extractor.extractField('unknown', 26, getUnknown);
+    const opcode = extractor.extractField(OpcodeField);
+    const unknown = extractor.extractField(UnknownField);
     return new UnknownInstruction(opcode, unknown);
   }
 
-  constructor(opcode: InstructionField<6>, unknown: UnknownField) {
+  constructor(opcode: OpcodeField, unknown: UnknownField) {
     super(
       opcode,
       [opcode, unknown], // fields
-      null, // instructionSpec
+      null,
+      ['instruction', 'unknown'],
     );
     this.unknown = unknown;
   }

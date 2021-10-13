@@ -1,4 +1,4 @@
-import type { Severity } from "./input-parser";
+import type { Severity } from './input-parser';
 
 export type ParseResult<T> = {
   value: T | null,

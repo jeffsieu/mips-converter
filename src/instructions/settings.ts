@@ -1,4 +1,4 @@
-import type { ImmediateFormat } from "./format/format";
+import type { ImmediateFormat } from './format/immediate-format';
 
 type RegisterMode = 'names' | 'numbers';
 type InputMode = 'encoded' | 'mips';

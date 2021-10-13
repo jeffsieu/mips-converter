@@ -1,6 +1,6 @@
 import instructions from '../../data/instructionSpec.json';
 import registers from '../../data/registers.json';
-import type { ImmediateFormat } from '../format/format';
+import type { ImmediateFormat } from '../format/immediate-format';
 import type { InstructionSpec } from '../types';
 
 const rInstructions = instructions.filter(i => i.functionCode !== null);
@@ -23,7 +23,7 @@ export function getShiftAmount(shiftAmount: string): string {
 export function getFunctionCode(functionCode: string): string {
   return rInstructions.find(
     (i) => i.functionCode === parseInt(functionCode, 2)
-  )!.mnemonic;
+  )?.mnemonic ?? 'unknown';
 }
 
 function getSignedImmediate(binary: string): number {
@@ -51,17 +51,19 @@ export function getJumpAddress(immediateFormat: ImmediateFormat) {
 }
 
 export function getUnknown(bits: string) {
-  return bits;
+  return 'unknown';
 }
 
 export function getRegisterNumber(binary: string): string {
   const registerNumber = parseInt(binary, 2);
+  // eslint-disable-next-line no-useless-escape
   return `\$${registerNumber}`;
 }
 
 export function getRegisterName(binary: string): string {
   const registerNumber = parseInt(binary, 2);
   const registerName = registers.find(r => r.number === registerNumber)?.name ?? 'unknown';
+  // eslint-disable-next-line no-useless-escape
   return `\$${registerName}`;
 }
 

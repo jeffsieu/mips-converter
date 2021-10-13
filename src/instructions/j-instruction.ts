@@ -1,28 +1,35 @@
 import instructionSpecs from '../data/instructionSpec.json';
 import FieldExtractor from './field-extractor';
+import type { FieldRole } from './field-role';
+import { JumpAddressField, OpcodeField } from './fields';
 
-import Instruction from "./instruction";
-import type InstructionField from './instruction-field';
-import { getJumpAddress, getOpcodeValue } from './parser/extractors';
+import Instruction from './instruction';
 import type { Settings } from './settings';
+import type { InstructionSpec } from './types';
 
 export default class JInstruction extends Instruction {
-  readonly jumpAddress: InstructionField<26>;
+  readonly jumpAddress: JumpAddressField;
 
   static fromBinary(binary: string, settings: Settings): JInstruction {
-    const extractor = new FieldExtractor(binary);
+    const extractor = new FieldExtractor(binary, settings);
 
-    const opcode = extractor.extractField('opcode', 6, getOpcodeValue);
-    const jumpAddress = extractor.extractField('jaddr', 26, getJumpAddress(settings.immediateFormat));
+    const opcode = extractor.extractField(OpcodeField);
+    const jumpAddress = extractor.extractField(JumpAddressField);
+    const instructionSpec = instructionSpecs.find(spec => spec.opcode === opcode.interpolatedValue) ?? null;
     
-    return new JInstruction(opcode, jumpAddress);
+    return new JInstruction(opcode, jumpAddress, instructionSpec);
   }
 
-  constructor(opcode: InstructionField<6>, jumpAddress: InstructionField<26>) {
+  private constructor(
+    opcode: OpcodeField,
+    jumpAddress: JumpAddressField,
+    instructionSpec: InstructionSpec | null,
+  ) {
     super(
       opcode,
       [opcode, jumpAddress], // fields
-      instructionSpecs.find(spec => spec.opcode === opcode.interpolatedValue) ?? null, // instructionSpec
+      instructionSpec,
+      ['instruction', 'jump address'],
     );
     this.jumpAddress = jumpAddress;
   }
