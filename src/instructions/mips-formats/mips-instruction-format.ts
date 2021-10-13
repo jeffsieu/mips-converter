@@ -1,7 +1,7 @@
-import { isShiftInstruction, isUnsignedImmediateInstruction, isInstructionDeclaredAsR, isInstructionDeclaredAsI, isLoadStoreInstruction, isJumpInstruction } from "../instruction";
-import { getInstructionSpecWithMnemonic, getRegisterNumberFromName } from "../parser/extractors";
-import type { ParseResult } from "../parser/parse-info";
-import type { InstructionSpec } from "../types";
+import { isShiftInstruction, isUnsignedImmediateInstruction, isInstructionDeclaredAsR, isInstructionDeclaredAsI, isLoadStoreInstruction, isJumpInstruction } from '../instruction';
+import { getInstructionSpecWithMnemonic, getRegisterNumberFromName } from '../fields/extractors';
+import type { ParseInfo, ParseResult } from '../parser/parse-info';
+import type { InstructionSpec } from '../types';
 
 function parseRegisterToBits(registerName: string): ParseResult<string> {
   const registerNumber = getRegisterNumberFromName(registerName);
@@ -47,7 +47,7 @@ function parseTwosComplement(value: number, length: number): ParseResult<string>
     return {
       value: twosComplementUnsignedValue.toString(2).padStart(length, '1'),
       message: null,
-    }
+    };
   }
 }
 
@@ -102,6 +102,10 @@ function parseJumpAddressToBits(jumpAddress: string): ParseResult<string> {
   return parseImmediateWithLengthToBits('shift amount', jumpAddress, 26, false);
 }
 
+function isParseInfo(parseInfo: ParseInfo | null): parseInfo is ParseInfo {
+  return parseInfo !== null;
+}
+
 function getThreeRegistersBits(instructionSpec: InstructionSpec, args: string[]): ParseResult<string> {
   if (args.length !== 3) {
     // TODO: Better error name
@@ -111,9 +115,10 @@ function getThreeRegistersBits(instructionSpec: InstructionSpec, args: string[])
   const registers = args.map(parseRegisterToBits);
 
   const message: string = registers
-                            .filter(result => result.message !== null)
-                            .map(result => result.message!.value)
-                            .reduce((m1, m2) => m1 + '\n' + m2, '');
+    .map(result => result.message)
+    .filter(isParseInfo)
+    .map(message => message.value)
+    .reduce((m1, m2) => m1 + '\n' + m2, '');
 
   if (registers.some(result => result.message?.severity === 'error')) {
     // Has an error, then return all the errors
@@ -154,9 +159,10 @@ function getImmediateInstructionBits(instructionSpec: InstructionSpec, args: str
   ];
 
   const message: string = results
-                            .filter(result => result.message !== null)
-                            .map(result => result.message!.value)
-                            .reduce((m1, m2) => m1 + '\n' + m2, '');
+    .map(result => result.message)
+    .filter(isParseInfo)
+    .map(message => message.value)
+    .reduce((m1, m2) => m1 + '\n' + m2, '');
 
   if (results.some(result => result.message?.severity === 'error')) {
     // Has an error, then return all the errors
@@ -191,7 +197,7 @@ function getImmediateInstructionBits(instructionSpec: InstructionSpec, args: str
 function getLoadStoreInstructionBits(instructionSpec: InstructionSpec, args: string[]) {
   // TODO: Better error
   if (args.length !== 3) {
-    throw new Error("???");
+    throw new Error('???');
   }
   // Same as normal immediate, just that order in args is different
   // args: [rDest, immediate, rSource]

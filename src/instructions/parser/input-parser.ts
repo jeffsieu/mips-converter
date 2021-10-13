@@ -1,4 +1,4 @@
-import type { ParseInfo } from "./parse-info";
+import type { ParseInfo } from './parse-info';
 
 export type Severity = 'info' | 'error';
 

@@ -1,12 +1,12 @@
 <script lang="ts">
-	import type { Instruction } from './instructions';
-	import { BinFormat, DecFormat, HexFormat, ImmediateFormat } from './instructions/format/format';
-	import { MipsDecoder, MipsEncoder } from './instructions/parser/mips-parser';
+	import { Instruction, RInstruction } from './instructions';
 	import { BinInputParser, HexInputParser } from './instructions/parser/input-parser';
 	import type { ParseInfo } from './instructions/parser/parse-info';
 	import { binToHex, hexToBin } from './utils';
 	import type { Settings } from './instructions/settings';
-
+	import type { InstructionField } from './instructions/fields';
+	import { HexFormat, DecFormat, BinFormat } from './instructions/format/immediate-format';
+	import { MipsDecoder, MipsEncoder } from './instructions/parser/mips-parser';
 	const immediateFormats = [new HexFormat(), new DecFormat(), new BinFormat()];	
 
 	let hexInput: string;
@@ -75,6 +75,8 @@
 	$: instruction = new MipsDecoder(binary, settings).get();
 	$: fields = instruction?.fields ?? [];
 	$: mipsInstruction = instruction?.toMips() ?? null;
+	$: unusedFields = instruction instanceof RInstruction ? instruction.getUnusedFields() : [];
+	$: isFieldUnused = (field: InstructionField<number>) => unusedFields.includes(field.name);
 </script>
 
 <main>
@@ -219,7 +221,7 @@
 			<thead>
 				<tr>
 					{#each fields as field}
-						<th>{field.name}</th>
+						<th class={isFieldUnused(field) ? "gray" : ""}>{field.name}</th>
 					{/each}
 				</tr>
 			</thead>

@@ -1,5 +1,6 @@
-import type InstructionField from "./instruction-field";
-import type { InstructionSpec } from "./types";
+import type { OpcodeField } from './fields/opcode-field';
+import type { InstructionField } from './fields/instruction-field';
+import type { InstructionSpec } from './types';
 
 const shiftMnemonics = ['sll', 'srl', 'sra'];
 const loadStoreMnemonics = ['lbu', 'lhu', 'll', 'lui', 'lw', 'lb', 'sb', 'sc', 'sh', 'sw'];
@@ -35,15 +36,12 @@ export function isUnsignedImmediateInstruction(instructionSpec: InstructionSpec)
   return instructionSpec.mnemonic.endsWith('u');
 }
 
-
-
-
 export default abstract class Instruction {
-  opcode: InstructionField<6>;
+  opcode: OpcodeField;
   fields: InstructionField<number>[];
   spec: InstructionSpec | null;
 
-  protected constructor(opcode: InstructionField<6>, fields: InstructionField<number>[], spec: InstructionSpec | null) {
+  protected constructor(opcode: OpcodeField, fields: InstructionField<number>[], spec: InstructionSpec | null) {
     this.opcode = opcode;
     this.fields = fields;
     this.spec = spec;
