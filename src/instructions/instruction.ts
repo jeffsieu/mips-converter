@@ -1,6 +1,7 @@
 import type { OpcodeField } from './fields/opcode-field';
 import type { InstructionField } from './fields/instruction-field';
 import type { InstructionSpec } from './types';
+import type { FieldRole } from './field-role';
 
 const shiftMnemonics = ['sll', 'srl', 'sra'];
 const loadStoreMnemonics = ['lbu', 'lhu', 'll', 'lui', 'lw', 'lb', 'sb', 'sc', 'sh', 'sw'];
@@ -37,14 +38,21 @@ export function isUnsignedImmediateInstruction(instructionSpec: InstructionSpec)
 }
 
 export default abstract class Instruction {
-  opcode: OpcodeField;
-  fields: InstructionField<number>[];
-  spec: InstructionSpec | null;
+  readonly opcode: OpcodeField;
+  readonly fields: InstructionField<number>[];
+  readonly spec: InstructionSpec | null;
+  readonly fieldRoles: FieldRole[];
 
-  protected constructor(opcode: OpcodeField, fields: InstructionField<number>[], spec: InstructionSpec | null) {
+  protected constructor(
+    opcode: OpcodeField,
+    fields: InstructionField<number>[],
+    spec: InstructionSpec | null,
+    fieldRoles: FieldRole[],
+  ) {
     this.opcode = opcode;
     this.fields = fields;
     this.spec = spec;
+    this.fieldRoles = fieldRoles;
   }
 
   abstract toMips(): string | null;

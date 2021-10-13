@@ -215,7 +215,6 @@ function getJumpInstructionBits(instructionSpec: InstructionSpec, args: string[]
   return parseJumpAddressToBits(args[0]);
 }
 
-
 export class MipsInstructionFormat {
   /**
    * Represents a MIPS register.

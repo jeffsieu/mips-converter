@@ -1,19 +1,19 @@
 <script lang="ts">
-	import { Instruction, RInstruction } from './instructions';
 	import { BinInputParser, HexInputParser } from './instructions/parser/input-parser';
 	import type { ParseInfo } from './instructions/parser/parse-info';
 	import { binToHex, hexToBin } from './utils';
 	import type { Settings } from './instructions/settings';
-	import type { InstructionField } from './instructions/fields';
 	import { HexFormat, DecFormat, BinFormat } from './instructions/format/immediate-format';
 	import { MipsDecoder, MipsEncoder } from './instructions/parser/mips-parser';
+	import type { Instruction } from './instructions';
 	const immediateFormats = [new HexFormat(), new DecFormat(), new BinFormat()];	
 
+	// Inputs
 	let hexInput: string;
 	let binInput: string;
 	let instructionInput: string;
-	// let isInputHex = true;
-	// let inputType: InputType = 'encoded';
+
+	// Input errors
 	let encodedParseInfo: ParseInfo | null = null;
 	let mipsParseInfo: ParseInfo | null = null;
 
@@ -24,8 +24,6 @@
 		registerMode: 'names',
 		immediateFormat: immediateFormats[0],
 	};
-	// let registerMode: RegisterMode = 'names';
-	// let showImmediateAs: ImmediateFormat = immediateFormats[0];
 
 	function toggleInput(): void {
 		settings.encodedInputMode = settings.encodedInputMode === 'hex' ? 'binary' : 'hex';
@@ -75,8 +73,6 @@
 	$: instruction = new MipsDecoder(binary, settings).get();
 	$: fields = instruction?.fields ?? [];
 	$: mipsInstruction = instruction?.toMips() ?? null;
-	$: unusedFields = instruction instanceof RInstruction ? instruction.getUnusedFields() : [];
-	$: isFieldUnused = (field: InstructionField<number>) => unusedFields.includes(field.name);
 </script>
 
 <main>
@@ -220,22 +216,35 @@
 		<table id="fields" class="code-table">
 			<thead>
 				<tr>
-					{#each fields as field}
-						<th class={isFieldUnused(field) ? "gray" : ""}>{field.name}</th>
+					{#each fields as field, i}
+						<th>
+							<span class={instruction.fieldRoles[i] === "unused" ? "gray" : ""}>{field.name}</span>
+						</th>
 					{/each}
 				</tr>
 			</thead>
 			<tbody>
 				<tr>
-					{#each fields as field}
-						<td>{field.value}</td>
+					{#each fields as field, i}
+						<td>
+							<span
+								class={instruction.fieldRoles[i] === "unused" ? "gray" : ""}
+								title={instruction.fieldRoles[i]}
+							>
+								{field.value}
+							</span>
+						</td>
 					{/each}
 				</tr>
 				<tr>
-					{#each fields as field}
+					{#each fields as field, i}
 						<td style="width: {field.length / 32}%">
-							<span>{field.binary}</span><!--
-						--><span class="gray">{'0'.repeat(field.length - field.binary.length)}</span>
+							<span
+								class={instruction.fieldRoles[i] === "unused" ? "gray" : ""}
+							>
+								<span>{field.binary}</span><!--
+														--><span class="gray">{'0'.repeat(field.length - field.binary.length)}</span>
+							</span>
 						</td>
 					{/each}
 				</tr>

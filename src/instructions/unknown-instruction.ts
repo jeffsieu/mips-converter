@@ -2,6 +2,7 @@ import FieldExtractor from './field-extractor';
 import { OpcodeField, UnknownField } from './fields';
 import Instruction from './instruction';
 import type { Settings } from './settings';
+import type { InstructionSpec } from './types';
 
 export default class UnknownInstruction extends Instruction {
   readonly unknown: UnknownField;
@@ -18,7 +19,8 @@ export default class UnknownInstruction extends Instruction {
     super(
       opcode,
       [opcode, unknown], // fields
-      null, // instructionSpec
+      null,
+      ['instruction', 'unknown'],
     );
     this.unknown = unknown;
   }

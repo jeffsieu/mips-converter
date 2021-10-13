@@ -3,8 +3,9 @@ import FieldExtractor from './field-extractor';
 import Instruction, { isUnsignedImmediateInstruction } from './instruction';
 import type { InstructionField } from './fields/instruction-field';
 import type { Settings } from './settings';
-import type { FieldName } from './types';
+import type { FieldName, InstructionSpec } from './types';
 import { OpcodeField, RsField, RtField, ImmediateField, UnsignedImmediateField, SignedImmediateField } from './fields';
+import type { FieldRole } from './field-role';
 
 function formatIInstruction(mnemonic: string, fields: InstructionField<number>[]): string {
   // Fields = [rs, rt, immed]
@@ -46,7 +47,7 @@ export default class IInstruction extends Instruction {
     const rt = extractor.extractField(RtField);
     const immediate = extractor.extractField(signed ? SignedImmediateField : UnsignedImmediateField);
 
-    return new IInstruction(opcode, rs, rt, immediate);
+    return new IInstruction(opcode, rs, rt, immediate, instructionSpec);
   }
 
   private constructor(
@@ -54,11 +55,13 @@ export default class IInstruction extends Instruction {
     rs: RsField,
     rt: RtField,
     immediate: ImmediateField,
+    instructionSpec: InstructionSpec | null,
   ) {
     super(
       opcode,
       [opcode, rs, rt, immediate], // fields
-      instructionSpecs.find(spec => spec.opcode === opcode.interpolatedValue) ?? null // instructionSpec
+      instructionSpec,
+      ['instruction', 'source', 'destination', 'immediate'],
     );
     this.rs = rs;
     this.rt = rt;

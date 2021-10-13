@@ -1,5 +1,6 @@
 import instructionSpecs from '../data/instructionSpec.json';
 import FieldExtractor from './field-extractor';
+import type { FieldRole } from './field-role';
 import { RsField, RtField, RdField, ShiftAmountField, OpcodeField, FunctionCodeField } from './fields';
 import Instruction from './instruction';
 import type { Settings } from './settings';
@@ -14,24 +15,54 @@ function getRelevantFields(spec: InstructionSpec | null): FieldName[] {
   // rd and rs (mfc0)
   switch (spec?.mnemonic) {
   case 'jr':
-    return ['rs', 'funct'];
+    return ['opcode', 'rs', 'funct'];
   case 'sll':
   case 'srl':
   case 'sra':
-    return ['rd', 'rt', 'shamt', 'funct'];
+    return ['opcode', 'rd', 'rt', 'shamt', 'funct'];
   case 'div':
   case 'divu':
   case 'mult':
   case 'multu':
-    return ['rs', 'rt', 'funct'];
+    return ['opcode', 'rs', 'rt', 'funct'];
   case 'mfhi':
   case 'mflo':
-    return ['rd', 'funct'];
+    return ['opcode', 'rd', 'funct'];
     // case 'mfc0':
     // The opcode is 10 in hex
     // return ['rd', 'rs', 'fcode'];
   default:
-    return ['rd', 'rs', 'rt', 'funct'];
+    return ['opcode', 'rd', 'rs', 'rt', 'funct'];
+  }
+}
+
+function getFieldRoles(spec: InstructionSpec | null): FieldRole[] {
+  // all
+  // rs (jr)
+  // shift (rd, rt, shamt) (sll, srl, sra)
+  // rs and rt (div/ divu mult multu)
+  // rd only (mfhi, mflo)
+  // rd and rs (mfc0)
+  switch (spec?.mnemonic) {
+  case 'jr':
+    return ['instruction', 'source', 'unused', 'unused', 'unused', 'instruction'];
+  case 'sll':
+  case 'srl':
+  case 'sra':
+    return ['instruction', 'unused', 'source', 'destination', 'shift amount', 'instruction'];
+  case 'div':
+  case 'divu':
+  case 'mult':
+  case 'multu':
+    return ['instruction', 'source1', 'source2', 'unused', 'unused', 'instruction'];
+  case 'mfhi':
+  case 'mflo':
+    return ['instruction', 'unused', 'unused', 'destination', 'unused', 'instruction'];
+    // case 'mfc0':
+    // The opcode is 10 in hex
+    // return ['rd', 'rs', 'fcode'];
+  default:
+    return ['instruction', 'destination', 'source1', 'source2', 'shift amount', 'instruction'];
   }
 }
 
@@ -51,8 +82,11 @@ export default class RInstruction extends Instruction {
     const rd = extractor.extractField(RdField);
     const shamt = extractor.extractField(ShiftAmountField);
     const funct = extractor.extractField(FunctionCodeField);
+    
+    const instructionSpec = instructionSpecs.find(spec => spec.functionCode === funct.interpolatedValue) ?? null;
+    const fieldRoles = getFieldRoles(instructionSpec);
 
-    return new RInstruction(opcode, rs, rt, rd, shamt, funct);
+    return new RInstruction(opcode, rs, rt, rd, shamt, funct, instructionSpec, fieldRoles);
   }
 
   private constructor(
@@ -62,10 +96,13 @@ export default class RInstruction extends Instruction {
     rd: RdField,
     shamt: ShiftAmountField,
     funct: FunctionCodeField,
+    instructionSpec: InstructionSpec | null,
+    fieldRoles: FieldRole[],
   ) {
     super(opcode,
       [opcode, rs, rt, rd, shamt, funct], // fields
-      instructionSpecs.find(spec => spec.functionCode === funct.interpolatedValue) ?? null, // instructionSpec
+      instructionSpec,
+      fieldRoles,
     );
     this.rs = rs;
     this.rt = rt;
@@ -74,7 +111,7 @@ export default class RInstruction extends Instruction {
     this.funct = funct;
   }
 
-  toMips(): string | null {
+  override toMips(): string | null {
     if (!this.spec) return null;
     const usedFieldNames = getRelevantFields(this.spec);
 
@@ -87,13 +124,5 @@ export default class RInstruction extends Instruction {
 
     const mipsInstruction = this.spec.mnemonic + ' ' + commaDelimitedRegisters;
     return mipsInstruction;
-  }
-
-  getUnusedFields(): FieldName[] {
-    const relevantFieldNames = getRelevantFields(this.spec);
-    relevantFieldNames.push('opcode');
-    const allFieldNames = this.fields.map(f => f.name);
-    const unusedFieldNames = allFieldNames.filter(name => !relevantFieldNames.includes(name));
-    return unusedFieldNames;
   }
 }
