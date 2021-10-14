@@ -6,6 +6,7 @@
 	import { HexFormat, DecFormat, BinFormat } from './instructions/format/immediate-format';
 	import { MipsDecoder, MipsEncoder } from './instructions/parser/mips-parser';
 	import type { Instruction } from './instructions';
+	import type { FieldRole } from './instructions/field-role';
 	const immediateFormats = [new HexFormat(), new DecFormat(), new BinFormat()];	
 
 	// Inputs
@@ -31,6 +32,28 @@
 
 	function toggleInputType(): void {
 		settings.inputMode = settings.inputMode === 'encoded' ? 'mips' : 'encoded';
+	}
+
+	function getFieldRoleColor(fieldRole: FieldRole): string {
+		switch (fieldRole) {
+			case 'destination':
+				return '#B0FFBA';
+			case 'source':
+				return '#FFD694'
+			case 'source1':
+				return '#FF8585';
+			case 'source2':
+				return '#F592F5';
+			case 'immediate':
+			case 'shift amount':
+			case 'jump address':
+				return '#918AFF';
+			case 'instruction':
+				return 'white';
+			case 'unknown':
+			case 'unused':
+				return 'gray';
+		}
 	}
 
 	let binary: string;
@@ -185,7 +208,19 @@
 		<h2 style="margin-block-start: 0;">MIPS instruction</h2>
 		<div>
 			<span id="mips-instruction" class="code inset">
-				{mipsInstruction ?? 'unknown'}
+				{#if !mipsInstruction}
+					unknown
+				{/if}
+				{#if mipsInstruction}
+					{#each mipsInstruction as mipsPart}
+						<span
+							style={`color: ${getFieldRoleColor(mipsPart.fieldRole ?? 'unknown')}`}
+							title={mipsPart.fieldRole ?? undefined}
+						>
+							<pre>{mipsPart.value}</pre>
+						</span>
+					{/each}
+				{/if}
 			</span>
 		</div>
 		<div><span class="code inset">0x{fullHexadecimal}</span></div>
@@ -213,12 +248,12 @@
 			</div>
 		</div>
 		<h3>Info</h3>
-		<table id="fields" class="code-table">
+		<table id="fields" class="inset code-table">
 			<thead>
 				<tr>
 					{#each fields as field, i}
 						<th>
-							<span class={instruction.fieldRoles[i] === "unused" ? "gray" : ""}>{field.name}</span>
+							<span style={`color: ${getFieldRoleColor(instruction.fieldRoles[i])}`}>{field.name}</span>
 						</th>
 					{/each}
 				</tr>
@@ -228,7 +263,7 @@
 					{#each fields as field, i}
 						<td>
 							<span
-								class={instruction.fieldRoles[i] === "unused" ? "gray" : ""}
+								style={`color: ${getFieldRoleColor(instruction.fieldRoles[i])}`}
 								title={instruction.fieldRoles[i]}
 							>
 								{field.value}
@@ -240,7 +275,7 @@
 					{#each fields as field, i}
 						<td style="width: {field.length / 32}%">
 							<span
-								class={instruction.fieldRoles[i] === "unused" ? "gray" : ""}
+								style={`color: ${getFieldRoleColor(instruction.fieldRoles[i])}`}
 							>
 								<span>{field.binary}</span><!--
 														--><span class="gray">{'0'.repeat(field.length - field.binary.length)}</span>
@@ -312,25 +347,34 @@
 
 	table:not(#fields):not(.transparent) td {
 		border-collapse: collapse;
-		border: var(--table-border-width) solid var(--clr-on);
+		border: var(--table-border-width) solid var(--clr-divider);
 	}
 
 	table#fields th,
 	table#fields td {
-		border-top: var(--table-border-width) solid var(--clr-on);
-		border-right: var(--table-border-width) solid var(--clr-on);
+		border-top: var(--table-border-width) solid var(--clr-divider);
+		border-right: var(--table-border-width) solid var(--clr-divider);
 	}
 
 	table#fields {
 		border-spacing: 0;
-		border-left: var(--table-border-width) solid var(--clr-on);
-		border-bottom: var(--table-border-width) solid var(--clr-on);
+		/* border-left: var(--table-border-width) solid var(--clr-on);
+		border-bottom: var(--table-border-width) solid var(--clr-on); */
 		/* border-collapse: collapse; */
 	}
 
 	table { 
 		width: 100%;
 		text-align: center;
+	}
+
+	table#fields.inset th {
+		border-top: none;
+	}
+
+	table#fields.inset th:last-child,
+	table#fields.inset td:last-child {
+		border-right: none;
 	}
 
 	.code-table td {
@@ -398,7 +442,7 @@
 	#mips-instruction {
 		font-size: 1.5rem;
 		color: var(--clr-on-background);
-		display: inline-block;
+		display: inline-flex;
 		padding-inline: 1rem;
 		padding-block: 0.5rem;
 		margin-block-start: 0;

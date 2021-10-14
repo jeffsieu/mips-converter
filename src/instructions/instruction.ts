@@ -37,6 +37,11 @@ export function isUnsignedImmediateInstruction(instructionSpec: InstructionSpec)
   return instructionSpec.mnemonic.endsWith('u');
 }
 
+export type MipsPart = {
+  value: string,
+  fieldRole: FieldRole | null;
+}
+
 export default abstract class Instruction {
   readonly opcode: OpcodeField;
   readonly fields: InstructionField<number>[];
@@ -55,5 +60,5 @@ export default abstract class Instruction {
     this.fieldRoles = fieldRoles;
   }
 
-  abstract toMips(): string | null;
+  abstract toMips(): MipsPart[] | null;
 }

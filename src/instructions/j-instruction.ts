@@ -3,7 +3,7 @@ import FieldExtractor from './field-extractor';
 import type { FieldRole } from './field-role';
 import { JumpAddressField, OpcodeField } from './fields';
 
-import Instruction from './instruction';
+import Instruction, { MipsPart } from './instruction';
 import type { Settings } from './settings';
 import type { InstructionSpec } from './types';
 
@@ -34,8 +34,20 @@ export default class JInstruction extends Instruction {
     this.jumpAddress = jumpAddress;
   }
 
-  override toMips(): string {
-    const mipsInstruction = this.opcode.value + ' ' + this.jumpAddress.value;
-    return mipsInstruction;
+  override toMips(): MipsPart[] {
+    return [
+      {
+        value: this.opcode.value,
+        fieldRole: 'instruction',
+      },
+      {
+        value: ' ',
+        fieldRole: null,
+      },
+      {
+        value: this.jumpAddress.value,
+        fieldRole: 'jump address',
+      },
+    ];
   }
 }

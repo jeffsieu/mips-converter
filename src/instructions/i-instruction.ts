@@ -1,13 +1,13 @@
 import instructionSpecs from '../data/instructionSpec.json';
 import FieldExtractor from './field-extractor';
-import Instruction, { isUnsignedImmediateInstruction } from './instruction';
+import Instruction, { isUnsignedImmediateInstruction, MipsPart } from './instruction';
 import type { InstructionField } from './fields/instruction-field';
 import type { Settings } from './settings';
 import type { FieldName, InstructionSpec } from './types';
 import { OpcodeField, RsField, RtField, ImmediateField, UnsignedImmediateField, SignedImmediateField } from './fields';
 import type { FieldRole } from './field-role';
 
-function formatIInstruction(mnemonic: string, fields: InstructionField<number>[]): string {
+function formatIInstruction(mnemonic: string, fields: InstructionField<number>[]): MipsPart[] {
   // Fields = [rs, rt, immed]
   const fieldValues = fields.map(f => f.value);
   switch (mnemonic) {
@@ -21,12 +21,58 @@ function formatIInstruction(mnemonic: string, fields: InstructionField<number>[]
   case 'sc':
   case 'sh':
   case 'sw':
-    return `${fieldValues[1]}, ${fieldValues[2]}(${fieldValues[0]})`;
+    return [
+      {
+        value: fieldValues[1],
+        fieldRole: mnemonic.startsWith('s') ? 'source' : 'destination',
+      },
+      {
+        value: ', ',
+        fieldRole: null,
+      },
+      {
+        value: fieldValues[2],
+        fieldRole: 'immediate',
+      },
+      {
+        value: '(',
+        fieldRole: null,
+      },
+      {
+        value: fieldValues[0],
+        fieldRole: mnemonic.startsWith('s') ? 'destination' : 'source',
+      },
+      {
+        value: ')',
+        fieldRole: null,
+      },
+    ];
   case 'beq':
   case 'bne':
   default:
     // format: addi r1, r2, immed
-    return `${fieldValues[1]}, ${fieldValues[0]}, ${fieldValues[2]}`;
+    return [
+      {
+        value: fieldValues[1],
+        fieldRole: 'source1',
+      },
+      {
+        value: ', ',
+        fieldRole: null,
+      },
+      {
+        value: fieldValues[0],
+        fieldRole: 'source2',
+      },
+      {
+        value: ', ',
+        fieldRole: null,
+      },
+      {
+        value: fieldValues[2],
+        fieldRole: 'immediate'
+      }
+    ];
   }
 }
 
@@ -47,7 +93,27 @@ export default class IInstruction extends Instruction {
     const rt = extractor.extractField(RtField);
     const immediate = extractor.extractField(signed ? SignedImmediateField : UnsignedImmediateField);
 
-    return new IInstruction(opcode, rs, rt, immediate, instructionSpec);
+    const fields = [opcode, rs, rt, immediate];
+
+    function isFieldRole(fieldRole: FieldRole | null): fieldRole is FieldRole {
+      return fieldRole !== null;
+    }
+
+    const fieldRoles = instructionSpec ? formatIInstruction(instructionSpec.mnemonic, fields)
+      .map(f => f.fieldRole)
+      .filter(isFieldRole) : null;
+
+    return new IInstruction(
+      opcode,
+      rs,
+      rt,
+      immediate,
+      fields,
+      instructionSpec,
+      fieldRoles
+        ? ['instruction', ...fieldRoles]
+        : ['instruction', 'source', 'destination', 'immediate'],
+    );
   }
 
   private constructor(
@@ -55,20 +121,22 @@ export default class IInstruction extends Instruction {
     rs: RsField,
     rt: RtField,
     immediate: ImmediateField,
+    fields: InstructionField<number>[],
     instructionSpec: InstructionSpec | null,
+    fieldRoles: FieldRole[],
   ) {
     super(
       opcode,
-      [opcode, rs, rt, immediate], // fields
+      fields,
       instructionSpec,
-      ['instruction', 'source', 'destination', 'immediate'],
+      fieldRoles,
     );
     this.rs = rs;
     this.rt = rt;
     this.immediate = immediate;
   }
 
-  override toMips(): string | null {
+  override toMips(): MipsPart[] | null {
     if (!this.spec?.mnemonic) {
       return null;
     }
@@ -78,9 +146,18 @@ export default class IInstruction extends Instruction {
       .filter(f => fieldsInInstruction.includes(f.name))
       .sort((f1, f2) => fieldsInInstruction.indexOf(f1.name) - fieldsInInstruction.indexOf(f2.name));
         
-    const formatString = formatIInstruction(this.spec?.mnemonic, filteredFields);
+    const argumentMipsParts = formatIInstruction(this.spec?.mnemonic, filteredFields);
 
-    const mipsInstruction = this.spec.mnemonic + ' ' + formatString;
-    return mipsInstruction;
+    return [
+      {
+        value: this.spec.mnemonic,
+        fieldRole: 'instruction',
+      },
+      {
+        value: ' ',
+        fieldRole: null,
+      },
+      ...argumentMipsParts,
+    ];
   }
 }
