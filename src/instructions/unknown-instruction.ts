@@ -1,8 +1,7 @@
 import FieldExtractor from './field-extractor';
 import { OpcodeField, UnknownField } from './fields';
-import Instruction from './instruction';
+import Instruction, { MipsPart } from './instruction';
 import type { Settings } from './settings';
-import type { InstructionSpec } from './types';
 
 export default class UnknownInstruction extends Instruction {
   readonly unknown: UnknownField;
@@ -25,7 +24,7 @@ export default class UnknownInstruction extends Instruction {
     this.unknown = unknown;
   }
 
-  toMips(): string | null {
+  toMips(): MipsPart[] | null {
     return null;
   }
 }

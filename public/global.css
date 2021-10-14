@@ -11,7 +11,12 @@
 	--clr-on-primary: #131820;
 	
 	--clr-on: var(--clr-on-background);
+	--clr-divider: #788297;
 	--clr-disabled: rgba(255, 255, 255, 0.2);
+}
+
+pre {
+	margin: 0;
 }
 
 html, body {

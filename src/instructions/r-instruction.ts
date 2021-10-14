@@ -2,7 +2,7 @@ import instructionSpecs from '../data/instructionSpec.json';
 import FieldExtractor from './field-extractor';
 import type { FieldRole } from './field-role';
 import { RsField, RtField, RdField, ShiftAmountField, OpcodeField, FunctionCodeField } from './fields';
-import Instruction from './instruction';
+import Instruction, { MipsPart } from './instruction';
 import type { Settings } from './settings';
 import type { FieldName, InstructionSpec } from './types';
 
@@ -111,18 +111,47 @@ export default class RInstruction extends Instruction {
     this.funct = funct;
   }
 
-  override toMips(): string | null {
+  override toMips(): MipsPart[] | null {
     if (!this.spec) return null;
     const usedFieldNames = getRelevantFields(this.spec);
 
     const fieldsInInstruction: FieldName[] = ['rd', 'rs', 'rt', 'shamt'];
     
-    const commaDelimitedRegisters = this.fields
+    const registerFields = this.fields
+      .map((f, i) => {
+        return { 
+          name: f.name,
+          value: f.value,
+          fieldRole: this.fieldRoles[i],
+        };
+      })
       .filter(f => fieldsInInstruction.includes(f.name) && usedFieldNames.includes(f.name))
-      .sort((f1, f2) => fieldsInInstruction.indexOf(f1.name) - fieldsInInstruction.indexOf(f2.name))
-      .map(f => f.value).join(', ');
+      .sort((f1, f2) => fieldsInInstruction.indexOf(f1.name) - fieldsInInstruction.indexOf(f2.name));
 
-    const mipsInstruction = this.spec.mnemonic + ' ' + commaDelimitedRegisters;
-    return mipsInstruction;
+    const registerMipParts = registerFields.flatMap(field => [
+      {
+        value: field.value,
+        fieldRole: field.fieldRole,
+      },
+      {
+        value: ', ',
+        fieldRole: null,
+      }
+    ]);
+
+    // Remove extra comma
+    registerMipParts.pop();
+
+    return [
+      {
+        value: this.spec.mnemonic,
+        fieldRole: 'instruction',
+      },
+      {
+        value: ' ',
+        fieldRole: null,
+      },
+      ...registerMipParts,
+    ];
   }
 }
