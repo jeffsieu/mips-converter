@@ -9,8 +9,19 @@ const loadStoreMnemonics = ['lbu', 'lhu', 'll', 'lui', 'lw', 'lb', 'sb', 'sc', '
 /**
  * Returns if the instruction in MIPS is declared in the form "mne $r1, $r2, $r3"
  */
-export function isInstructionDeclaredAsR(instructionSpec: InstructionSpec): boolean {
-  return instructionSpec.type === 'R' && !isShiftInstruction(instructionSpec);
+export function isInstructionDeclaredWithThreeRegisters(instructionSpec: InstructionSpec): boolean {
+  return instructionSpec.type === 'R'
+    && !isShiftInstruction(instructionSpec)
+    && !isInstructionDeclaredWithTwoRegisters(instructionSpec)
+    && !isInstructionDeclaredWithOneRegister(instructionSpec);
+}
+
+export function isInstructionDeclaredWithTwoRegisters(instructionSpec: InstructionSpec): boolean {
+  return ['div', 'divu', 'mult', 'multu'].includes(instructionSpec.mnemonic);
+}
+
+export function isInstructionDeclaredWithOneRegister(instructionSpec: InstructionSpec): boolean {
+  return ['jr', 'mfhi', 'mflo'].includes(instructionSpec.mnemonic);
 }
 
 /**

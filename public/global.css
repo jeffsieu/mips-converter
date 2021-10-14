@@ -97,10 +97,13 @@ select:disabled {
 }
 
 button:not(:disabled):hover,
-button:not(:disabled):active,
-select:hover,
-select:active {
+select:hover {
 	background: linear-gradient(145deg, #334057, #262F40);
+}
+
+button:not(:disabled):active,
+select:active {
+	background: linear-gradient(145deg, #262F40, #334057);
 }
 
 select {

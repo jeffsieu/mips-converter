@@ -1,4 +1,4 @@
-import { isShiftInstruction, isUnsignedImmediateInstruction, isInstructionDeclaredAsR, isInstructionDeclaredAsI, isLoadStoreInstruction, isJumpInstruction } from '../instruction';
+import { isShiftInstruction, isUnsignedImmediateInstruction, isInstructionDeclaredWithThreeRegisters, isInstructionDeclaredAsI, isLoadStoreInstruction, isJumpInstruction, isInstructionDeclaredWithTwoRegisters, isInstructionDeclaredWithOneRegister } from '../instruction';
 import { getInstructionSpecWithMnemonic, getRegisterNumberFromName } from '../fields/extractors';
 import type { ParseInfo, ParseResult } from '../parser/parse-info';
 import type { InstructionSpec } from '../types';
@@ -104,6 +104,40 @@ function parseJumpAddressToBits(jumpAddress: string): ParseResult<string> {
 
 function isParseInfo(parseInfo: ParseInfo | null): parseInfo is ParseInfo {
   return parseInfo !== null;
+}
+
+
+function getOneRegisterBits(instructionSpec: InstructionSpec, args: string[]): ParseResult<string> {
+  if (args.length !== 1) {
+    // TODO: Better error name
+    throw new Error('???');
+  }
+
+  // rs (jr)
+  // rd only (mfhi, mflo)
+
+  switch (instructionSpec.mnemonic) {
+  case 'jr':
+    return getThreeRegistersBits(instructionSpec, ['00000', args[0],'00000']);
+  case 'mfhi':
+  case 'mflo':
+    return getThreeRegistersBits(instructionSpec, [args[0], '00000', '00000']);
+  default:
+    // Invalid mnemonic
+    return {
+      value: null,
+      message: null,
+    };
+  }
+}
+
+function getTwoRegistersBits(instructionSpec: InstructionSpec, args: string[]): ParseResult<string> {
+  if (args.length !== 2) {
+    // TODO: Better error name
+    throw new Error('???');
+  }
+
+  return getThreeRegistersBits(instructionSpec, ['00000', ...args]);
 }
 
 function getThreeRegistersBits(instructionSpec: InstructionSpec, args: string[]): ParseResult<string> {
@@ -230,9 +264,19 @@ export class MipsInstructionFormat {
   private static readonly REGEX_MNEMONIC: string = '(\\w+)';
 
   /**
-   * Represents instructions  with the format "mne $t1, $t2, $t3".
+   * Represents instructions with the format "mne $t1, $t2, $t3".
    */
   private static readonly REGEX_THREE_REGISTER = `^${this.REGEX_MNEMONIC}\\s+${this.REGEX_REGISTER}\\s*,\\s*${this.REGEX_REGISTER}\\s*,\\s*${this.REGEX_REGISTER}$`;
+
+  /**
+   * Represents instructions with the format "mne $t1, $t2".
+   */
+  private static readonly REGEX_TWO_REGISTER = `^${this.REGEX_MNEMONIC}\\s+${this.REGEX_REGISTER}\\s*,\\s*${this.REGEX_REGISTER}$`;
+
+  /**
+   * Represents instructions with the format "mne $t1".
+   */
+  private static readonly REGEX_ONE_REGISTER = `^${this.REGEX_MNEMONIC}\\s+${this.REGEX_REGISTER}$`;
 
   /**
    * Represents instructions with the format "mne $t1, $t2, immed".
@@ -250,7 +294,11 @@ export class MipsInstructionFormat {
   private static readonly REGEX_JUMP = `^${this.REGEX_MNEMONIC}\\s+${this.REGEX_IMMEDIATE}$`;
 
   static readonly FORMAT_THREE_REGISTER: MipsInstructionFormat
-    = new MipsInstructionFormat(this.REGEX_THREE_REGISTER, isInstructionDeclaredAsR, getThreeRegistersBits);
+    = new MipsInstructionFormat(this.REGEX_THREE_REGISTER, isInstructionDeclaredWithThreeRegisters, getThreeRegistersBits);
+  static readonly FORMAT_TWO_REGISTER: MipsInstructionFormat
+    = new MipsInstructionFormat(this.REGEX_TWO_REGISTER, isInstructionDeclaredWithTwoRegisters, getTwoRegistersBits);
+  static readonly FORMAT_ONE_REGISTER: MipsInstructionFormat
+    = new MipsInstructionFormat(this.REGEX_ONE_REGISTER, isInstructionDeclaredWithOneRegister, getOneRegisterBits);
   static readonly FORMAT_TWO_R_ONE_I: MipsInstructionFormat
     = new MipsInstructionFormat(this.REGEX_TWO_R_ONE_I, isInstructionDeclaredAsI, getImmediateInstructionBits);
   static readonly FORMAT_LOAD_STORE: MipsInstructionFormat
@@ -260,6 +308,8 @@ export class MipsInstructionFormat {
 
   static readonly FORMATS = [
     MipsInstructionFormat.FORMAT_THREE_REGISTER,
+    MipsInstructionFormat.FORMAT_TWO_REGISTER,
+    MipsInstructionFormat.FORMAT_ONE_REGISTER,
     MipsInstructionFormat.FORMAT_TWO_R_ONE_I,
     MipsInstructionFormat.FORMAT_LOAD_STORE,
     MipsInstructionFormat.FORMAT_JUMP,
